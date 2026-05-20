@@ -201,7 +201,10 @@ class GRUDDataset(Dataset):
             self.labels.append(label)
 
         # Per-feature mean in normalized space (used as GRU-D imputation target)
-        self.x_mean = np.where(feat_cnt > 0, feat_sum / feat_cnt, 0.0).astype(np.float32)
+        x_mean = np.zeros(D, dtype=np.float64)
+        observed = feat_cnt > 0
+        x_mean[observed] = feat_sum[observed] / feat_cnt[observed]
+        self.x_mean = x_mean.astype(np.float32)
 
     def get_normalization_stats(self):
         return {"mean": self.mean, "std": self.std}

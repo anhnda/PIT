@@ -188,7 +188,10 @@ class HybridGRUDDataset(Dataset):
             self.static_data.append(torch.tensor(s_vec, dtype=torch.float32))
             self.labels.append(label)
 
-        self.x_mean = np.where(feat_cnt > 0, feat_sum / feat_cnt, 0.0).astype(np.float32)
+        x_mean = np.zeros(D, dtype=np.float64)
+        observed = feat_cnt > 0
+        x_mean[observed] = feat_sum[observed] / feat_cnt[observed]
+        self.x_mean = x_mean.astype(np.float32)
 
     def get_normalization_stats(self):
         return {"mean": self.mean, "std": self.std}
