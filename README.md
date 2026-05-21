@@ -8,7 +8,7 @@ This repository contains the implementation of **RIT (Reinforcement learning for
 
 ## Paper Reference
 
-**Title:** Reinforcement Learning for Irregular Temporal Data: A Framework for Accurately Predicting Acute Kidney Injury in Diabetic Ketoacidosis
+**Title:** Reinforcement Learning for Irregular Temporal Data: A Framework for Acute Kidney Injury Prediction
 
 **Authors:** Nguyen Hong Quang, Bui Hoang Tu, Peter Petschner, and Duc Anh Nguyen
 
