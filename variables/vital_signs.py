@@ -1,4 +1,4 @@
-from mimic_sql import vitalsign
+#from mimic_sql import vitalsign
 
 
 def getHeartRate():
