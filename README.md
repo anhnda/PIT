@@ -535,7 +535,7 @@ The paper includes:
 If you use this code, please cite:
 
 ```bibtex
-@article{nguyen2024PIT,
+@article{nguyen2026PIT,
   title={PIT: Policy-Gradient Representation Learning for Irregular Biomedical Time-Series Signal Processing},
   author={Nguyen, Hong Quang and Bui, Hoang Tu and Petschner, Peter and Nguyen, Duc Anh},
   journal={},
