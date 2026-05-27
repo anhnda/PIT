@@ -456,7 +456,7 @@ def main():
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
 
-    for fold, (train_full, test_p) in enumerate(trainTestPatients(patients, k=10, seed=xseed)):
+    for fold, (train_full, test_p) in enumerate(trainTestPatients(patients, seed=xseed)):
         print(f"\n{'='*80}\nFold {fold}\n{'='*80}")
 
         train_p_obj, val_p_obj = split_patients_train_val(train_full, val_ratio=0.1, seed=42 + fold)
@@ -551,7 +551,8 @@ def main():
     ax1.set_title("ROC Curves (RL V5 — Fixed Variance)")
     ax1.legend(fontsize=8)
 
-    ax2.bar(range(len(metrics_rl["auc_pr"])), metrics_rl["auc_pr"], alpha=0.7, label="AUPR")
+    n_folds = len(metrics_rl["auc_pr"])
+    ax2.bar(range(n_folds), metrics_rl["auc_pr"], alpha=0.7, label="AUPR")
     ax2.set_xlabel("Fold"); ax2.set_ylabel("AUPR")
     ax2.set_title("AUPR per Fold"); ax2.legend()
 
