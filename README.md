@@ -536,10 +536,10 @@ If you use this code, please cite:
 
 ```bibtex
 @article{nguyen2024PIT,
-  title={Reinforcement Learning for Irregular Temporal Data: A Framework for Accurately Predicting Acute Kidney Injury in Diabetic Ketoacidosis},
+  title={PIT: Policy-Gradient Representation Learning for Irregular Biomedical Time-Series Signal Processing},
   author={Nguyen, Hong Quang and Bui, Hoang Tu and Petschner, Peter and Nguyen, Duc Anh},
-  journal={IEEE Journal of Biomedical and Health Informatics},
-  year={2024}
+  journal={},
+  year={2026}
 }
 ```
 
