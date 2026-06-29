@@ -65,6 +65,12 @@ def main():
     # Load patients
     print("Loading patients...")
     patients = Patients.loadPatients()
+    _info = patients.applyLandmarkHorizon(
+        landmark=pd.Timedelta(hours=24), horizon=pd.Timedelta(hours=48)
+    )
+    print(f"[Landmark] cohort {_info['n_before']} -> {_info['n_after']} | "
+          f"excluded {_info['n_excluded_pre_landmark']} pre-landmark | "
+          f"pos_rate {_info['pos_rate']:.3f}")
 
     # Store metrics
     metrics = {k: [] for k in ['auc', 'acc', 'spec', 'prec', 'rec', 'auc_pr']}
@@ -79,12 +85,12 @@ def main():
 
         df_train = train_full.getMeasuresBetween(
             pd.Timedelta(hours=-6), pd.Timedelta(hours=24), "last",
-            getUntilAkiPositive=True
+            getUntilAkiPositive=False
         ).drop(columns=["subject_id", "hadm_id", "stay_id"])
 
         df_test = test_p.getMeasuresBetween(
             pd.Timedelta(hours=-6), pd.Timedelta(hours=24), "last",
-            getUntilAkiPositive=True
+            getUntilAkiPositive=False
         ).drop(columns=["subject_id", "hadm_id", "stay_id"])
 
         # Encode categorical features

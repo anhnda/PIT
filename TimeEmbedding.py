@@ -76,7 +76,7 @@ def get_all_temporal_features(patients):
         pd.Timedelta(hours=-6),
         pd.Timedelta(hours=24),
         "last",
-        getUntilAkiPositive=True
+        getUntilAkiPositive=False,
     )
 
     all_features = [col for col in df.columns
@@ -87,15 +87,18 @@ def get_all_temporal_features(patients):
 
 
 def extract_temporal_data(patient, feature_names, time_window_start=-6, time_window_end=24):
-    """Extract temporal measurements respecting AKI diagnosis time."""
+    """Extract temporal measurements over a FIXED observation window.
+
+    The window is the same for every patient and never depends on outcome.
+    After applyLandmarkHorizon, all retained patients have akdTime > landmark,
+    so the old onset-based truncation (which previously cut the window at
+    aki_cutoff_hours for positives) is both unnecessary and a source of
+    leakage; it has been removed.
+    """
     intime = patient.intime
 
-    # Calculate cutoff time to prevent data leakage
-    if patient.akdPositive:
-        aki_cutoff_hours = patient.akdTime.total_seconds() / 3600
-        effective_end = min(time_window_end, aki_cutoff_hours)
-    else:
-        effective_end = time_window_end
+    # Fixed window end — independent of the label (no onset-based cutoff).
+    effective_end = time_window_end
 
     # Get temporal measures
     temporal_measures = {}
@@ -368,8 +371,18 @@ class TimeEmbeddedRNNModel(nn.Module):
 # 3. TRAINING AND EVALUATION
 # ============================================================================
 
-def load_and_prepare_patients():
-    """Load patients and remove missing data."""
+def load_and_prepare_patients(
+    landmark=pd.Timedelta(hours=24),
+    horizon=pd.Timedelta(hours=48),
+):
+    """Load patients, remove missing data, and apply the landmark protocol.
+
+    The landmark/horizon step (applyLandmarkHorizon) converts the cohort into a
+    proper future-prediction task and removes the outcome-dependent windowing
+    leak (Reviewer 6, point 2). After this call, every downstream feature
+    extraction MUST use a fixed window [..., landmark] and MUST NOT pass
+    getUntilAkiPositive=True.
+    """
     patients = Patients.loadPatients()
     print(f"Loaded {len(patients)} patients")
 
@@ -383,8 +396,17 @@ def load_and_prepare_patients():
     patients.removePatientByMissingFeatures()
     print(f"After cleanup: {len(patients)} patients")
 
+    # --- Landmark prediction protocol (removes label leakage) ---------------
+    info = patients.applyLandmarkHorizon(landmark=landmark, horizon=horizon)
+    print(
+        f"[Landmark] L={info['landmark_hours']:.0f}h H={info['horizon_hours']:.0f}h | "
+        f"excluded {info['n_excluded_pre_landmark']} pre-landmark AKI | "
+        f"cohort {info['n_before']} -> {info['n_after']} | "
+        f"pos {info['n_positive']} ({info['pos_rate']:.2%})"
+    )
+
     aki_count = sum([1 for p in patients if p.akdPositive])
-    print(f"AKI positive: {aki_count} ({aki_count / len(patients):.2%})")
+    print(f"AKI positive (horizon): {aki_count} ({aki_count / len(patients):.2%})")
 
     return patients
 

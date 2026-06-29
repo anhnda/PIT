@@ -186,7 +186,16 @@ def main():
 
     # grab fold 1 exactly as the original pipeline produces it
     train_full = test_p = None
-    for fold, (tr, te) in enumerate(trainTestPatients(Patients.loadPatients(), seed=XSEED)):
+    # Load cohort and apply the landmark/horizon protocol so the debug run
+    # matches the leak-free pipeline (no outcome-dependent windowing).
+    _cohort = Patients.loadPatients()
+    _info = _cohort.applyLandmarkHorizon(
+        landmark=pd.Timedelta(hours=24), horizon=pd.Timedelta(hours=48)
+    )
+    print(f"  [Landmark] cohort {_info['n_before']} -> {_info['n_after']} | "
+          f"excluded {_info['n_excluded_pre_landmark']} pre-landmark | "
+          f"pos_rate {_info['pos_rate']:.3f}\n")
+    for fold, (tr, te) in enumerate(trainTestPatients(_cohort, seed=XSEED)):
         if fold == FOLD:
             train_full, test_p = tr, te
             break
@@ -194,11 +203,11 @@ def main():
 
     df_tr = train_full.getMeasuresBetween(
         pd.Timedelta(hours=-6), pd.Timedelta(hours=24), "last",
-        getUntilAkiPositive=True
+        getUntilAkiPositive=False
     ).drop(columns=["subject_id", "hadm_id", "stay_id"])
     df_te = test_p.getMeasuresBetween(
         pd.Timedelta(hours=-6), pd.Timedelta(hours=24), "last",
-        getUntilAkiPositive=True
+        getUntilAkiPositive=False
     ).drop(columns=["subject_id", "hadm_id", "stay_id"])
 
     df_tr, df_te, _ = encodeCategoricalData(df_tr, df_te)

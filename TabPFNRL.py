@@ -647,10 +647,10 @@ def main():
         print("\n  [Baseline] Standard TabPFN (Last + Static)...")
 
         df_train_temp = train_p_obj.getMeasuresBetween(
-            pd.Timedelta(hours=-6), pd.Timedelta(hours=24), "last", getUntilAkiPositive=True
+            pd.Timedelta(hours=-6), pd.Timedelta(hours=24), "last", getUntilAkiPositive=False
         ).drop(columns=["subject_id", "hadm_id", "stay_id"])
         df_test_temp = test_p.getMeasuresBetween(
-            pd.Timedelta(hours=-6), pd.Timedelta(hours=24), "last", getUntilAkiPositive=True
+            pd.Timedelta(hours=-6), pd.Timedelta(hours=24), "last", getUntilAkiPositive=False
         ).drop(columns=["subject_id", "hadm_id", "stay_id"])
 
         df_train_enc, df_test_enc, _ = encodeCategoricalData(df_train_temp, df_test_temp)

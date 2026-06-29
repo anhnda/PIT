@@ -388,6 +388,70 @@ class Patients:
 
         return prevLen - len(self)
 
+    def applyLandmarkHorizon(
+        self,
+        landmark: pd.Timedelta = pd.Timedelta(hours=24),
+        horizon: pd.Timedelta = pd.Timedelta(hours=48),
+    ):
+        """Convert the cohort into a proper landmark prediction task.
+
+        This removes the outcome-dependent windowing leak flagged by
+        Reviewer 6 (point 2). Previously the observation window for AKI-positive
+        patients was truncated at their individual onset time (akdTime), so the
+        sequence length, measurement density, AND the last-observed renal
+        markers (serum creatinine / eGFR) all carried direct information about
+        the label. The model could "predict" AKI simply because its inputs were
+        sampled right up to the moment AKI was diagnosed.
+
+        The landmark protocol fixes this:
+          * Every patient is observed over the SAME fixed window [0, landmark],
+            independent of outcome. Callers must use a fixed window and must NOT
+            pass getUntilAkiPositive=True after this.
+          * Patients whose AKI onset is at or before the landmark are EXCLUDED:
+            their outcome has already occurred, so predicting it is not a
+            prediction task. (akdTime <= landmark -> drop)
+          * The label is redefined as AKI occurring within the prediction
+            horizon (landmark, landmark + horizon]:
+                positive  if landmark < akdTime <= landmark + horizon
+                negative  otherwise (no AKI, or AKI after the horizon)
+
+        Returns a dict with cohort accounting so the change is auditable.
+        """
+        prevLen = len(self)
+        horizonEnd = landmark + horizon
+
+        kept = []
+        n_excluded_pre_landmark = 0
+        n_pos = 0
+        n_neg = 0
+        for p in self.patientList:
+            # Exclude patients who already developed AKI at/before the landmark.
+            if p.akdPositive and p.akdTime <= landmark:
+                n_excluded_pre_landmark += 1
+                continue
+
+            # Redefine the label on the prediction horizon.
+            isPositive = bool(p.akdPositive) and (landmark < p.akdTime <= horizonEnd)
+            p.akdPositive = isPositive
+            if isPositive:
+                n_pos += 1
+            else:
+                n_neg += 1
+            kept.append(p)
+
+        self.patientList = kept
+
+        return {
+            "landmark_hours": landmark.total_seconds() / 3600,
+            "horizon_hours": horizon.total_seconds() / 3600,
+            "n_before": prevLen,
+            "n_after": len(self),
+            "n_excluded_pre_landmark": n_excluded_pre_landmark,
+            "n_positive": n_pos,
+            "n_negative": n_neg,
+            "pos_rate": (n_pos / len(self)) if len(self) else 0.0,
+        }
+
     def _putDataForPatients(self, df: DataFrame):
         for patient in self.patientList:
             if "stay_id" in df.columns:
