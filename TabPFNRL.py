@@ -644,7 +644,7 @@ def main():
         print(f"  RL Test AUC: {fold_auc:.4f} | Test AUPR: {fold_aupr:.4f}")
 
         # BASELINE
-        #print("\n  [Baseline] Standard TabPFN (Last + Static)...")
+        print("\n  [Baseline] Standard TabPFN (Last + Static)...")
 
         df_train_temp = train_p_obj.getMeasuresBetween(
             pd.Timedelta(hours=-6), pd.Timedelta(hours=24), "last", getUntilAkiPositive=True
@@ -675,8 +675,8 @@ def main():
         fpr_b, tpr_b, _ = roc_curve(y_te_b, y_prob_b)
         ax2.plot(fpr_b, tpr_b, lw=2, label=f"Fold {fold} (AUC = {baseline_auc:.3f})")
 
-        #print(f"  Baseline Test AUC: {baseline_auc:.4f} | Test AUPR: {baseline_aupr:.4f}")
-        print(f"  Fold {fold} Results -> RL: {fold_auc:.3f}")
+        print(f"  Baseline Test AUC: {baseline_auc:.4f} | Test AUPR: {baseline_aupr:.4f}")
+        print(f"  Fold {fold} Results -> RL: {fold_auc:.3f} vs Baseline: {baseline_auc:.3f}")
 
     # Final Plot
     # for ax in [ax1, ax2]:
