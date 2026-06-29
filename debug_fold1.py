@@ -203,6 +203,11 @@ def main():
 
     df_tr, df_te, _ = encodeCategoricalData(df_tr, df_te)
 
+    # encodeCategoricalData can leave a non-contiguous index after the fold slice;
+    # reset so positional .iloc indexing below is unambiguous.
+    df_tr = df_tr.reset_index(drop=True)
+    df_te = df_te.reset_index(drop=True)
+
     X = df_tr.drop(columns=["akd"]).fillna(0)
     y = df_tr["akd"].values
     X_te = df_te.drop(columns=["akd"]).fillna(0)
@@ -210,10 +215,12 @@ def main():
 
     # reproduce the SAME train/val split your RL stage uses.
     # (replace this stub with your real split if it differs — keep it identical)
-    rng = np.random.RandomState(XSEED)
-    idx = rng.permutation(len(X))
-    cut = int(0.85 * len(X))
-    tr_i, val_i = idx[:cut], idx[cut:]
+    # STRATIFIED so val pos_rate tracks train/test instead of drifting (the
+    # 0.459 vs 0.391 imbalance was inflating the val/test AUPR gap on fold 1).
+    from sklearn.model_selection import train_test_split
+    tr_i, val_i = train_test_split(
+        np.arange(len(X)), test_size=0.15, random_state=XSEED, stratify=y
+    )
     X_tr, y_tr = X.iloc[tr_i], y[tr_i]
     X_val, y_val = X.iloc[val_i], y[val_i]
 

@@ -63,6 +63,7 @@ class DataNormalizer:
                 columns=self.oneHotEncoder.get_feature_names_out(
                     self.categoricalColumns
                 ),
+                index=dfTrain.index,
             )
             dfTrain = dfTrain.drop(columns=self.categoricalColumns)
             dfTrain = dfTrain.join(dfEncoded)
@@ -97,7 +98,8 @@ class DataNormalizer:
         if self.encodeCategorical:
             encoded = self.oneHotEncoder.transform(df[self.categoricalColumns])
             dfEncoded = pd.DataFrame(
-                encoded, columns=self.oneHotEncoder.get_feature_names_out(list(self.categoricalColumns))  # type: ignore
+                encoded, columns=self.oneHotEncoder.get_feature_names_out(list(self.categoricalColumns)),  # type: ignore
+                index=df.index,
             )
             df = df.drop(columns=self.categoricalColumns)
             df = df.join(dfEncoded)
