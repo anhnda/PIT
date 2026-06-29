@@ -63,8 +63,11 @@ class DataNormalizer:
                 columns=self.oneHotEncoder.get_feature_names_out(
                     self.categoricalColumns
                 ),
-                index=dfTrain.index,
             )
+            # getMeasuresBetween concats per-patient rows without ignore_index,
+            # so dfTrain.index is all-zeros (duplicated). Align positionally.
+            dfTrain = dfTrain.reset_index(drop=True)
+            dfEncoded = dfEncoded.reset_index(drop=True)
             dfTrain = dfTrain.drop(columns=self.categoricalColumns)
             dfTrain = dfTrain.join(dfEncoded)
 
@@ -99,8 +102,11 @@ class DataNormalizer:
             encoded = self.oneHotEncoder.transform(df[self.categoricalColumns])
             dfEncoded = pd.DataFrame(
                 encoded, columns=self.oneHotEncoder.get_feature_names_out(list(self.categoricalColumns)),  # type: ignore
-                index=df.index,
             )
+            # df.index is all-zeros (duplicated) from getMeasuresBetween concat.
+            # Align positionally to avoid a many-to-many join blow-up.
+            df = df.reset_index(drop=True)
+            dfEncoded = dfEncoded.reset_index(drop=True)
             df = df.drop(columns=self.categoricalColumns)
             df = df.join(dfEncoded)
 
