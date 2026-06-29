@@ -86,6 +86,11 @@ def main():
     pa.add_argument("--epochs", type=int, default=60)
     pa.add_argument("--wd", type=float, default=0.0)
     pa.add_argument("--seed", type=int, default=27)
+    pa.add_argument("--val_ratio", type=float, default=0.1,
+                    help="bump to 0.2/0.3 to see if a larger val tames AUPR noise (cause B)")
+    pa.add_argument("--cv", type=int, default=0,
+                    help="if >0, also evaluate pretrain via K-fold CV INSIDE train "
+                         "(out-of-fold AUPR on all train positives). Decides B vs C.")
     args = pa.parse_args()
 
     patients = load_and_prepare_patients()
@@ -96,7 +101,7 @@ def main():
     folds = list(trainTestPatients(patients, seed=args.seed))
     train_full, test_p = folds[args.fold]
     train_p_obj, val_p_obj = split_patients_train_val(
-        train_full, val_ratio=0.1, seed=42 + args.fold)
+        train_full, val_ratio=args.val_ratio, seed=42 + args.fold)
 
     train_ds = HybridDataset(train_p_obj.patientList, temporal_feats, encoder)
     stats = train_ds.get_normalization_stats()
@@ -109,24 +114,103 @@ def main():
                                 hidden_dim=20, latent_dim=28, time_dim=32)
 
     vpos, vn = count_pos(val_loader); tpos, tn = count_pos(train_loader)
-    print(f"\nFOLD {args.fold} | train n={tn} pos={tpos} ({tpos/tn:.1%}) "
+    print(f"\nFOLD {args.fold} | val_ratio={args.val_ratio} | "
+          f"train n={tn} pos={tpos} ({tpos/tn:.1%}) "
           f"| val n={vn} pos={vpos} ({vpos/vn:.1%})")
-    print(f"NOTE: val has only {vpos} positives -> AUPR is intrinsically noisy "
+    print(f"NOTE: val has {vpos} positives -> AUPR is intrinsically noisy "
           f"if this is < ~40 (cause B).\n")
 
     for lr in args.lrs:
-        print(f"================  LR={lr:g}  wd={args.wd:g}  ================")
+        print(f"================  LR={lr:g}  wd={args.wd:g}  val_ratio={args.val_ratio}  ================")
         print(f"{'ep':>3} | {'tr_loss':>8} | {'val_AUPR':>8} | {'val_AUC':>7} | pos/n")
         hist = run_one(make_net, train_loader, val_loader, lr, args.epochs, args.wd)
         for ep, tl, aupr, auc, vp, vnn in hist:
             print(f"{ep:3d} | {tl:8.4f} | {aupr:8.4f} | {auc:7.4f} | {vp}/{vnn}")
-        auprs = [h[2] for h in hist]
+        auprs = [h[2] for h in hist]; aucs = [h[3] for h in hist]
         peak_ep = hist[int(np.argmax(auprs))][0]
         last5 = float(np.mean(auprs[-5:])) if len(auprs) >= 5 else float(np.mean(auprs))
-        print(f"  -> peak {max(auprs):.4f}@ep{peak_ep} | mean(last5)={last5:.4f} "
-              f"| swing={max(auprs)-min(auprs):.4f}")
-        print(f"     peak early & last5<<peak => [A] overfit/LR; "
-              f"big swing even at low LR => [C] instability\n")
+        print(f"  -> AUPR peak {max(auprs):.4f}@ep{peak_ep} | mean(last5)={last5:.4f} "
+              f"| AUPR swing={max(auprs)-min(auprs):.4f} | AUC swing={max(aucs)-min(aucs):.4f}")
+        print(f"     If AUPR swing >> AUC swing, the wobble is metric noise on few "
+              f"positives (B), not the model (C).\n")
+
+    if args.cv > 0:
+        print(f"\n############  INTERNAL {args.cv}-FOLD CV ON TRAIN  ############")
+        print("Out-of-fold AUPR is computed on ALL train positives at once, so it")
+        print("has many more positives than a single small val split. If this curve")
+        print("is stable while the val curves above wobble, the cause is B (small")
+        print("val), not C (unstable training). val/test stay untouched.\n")
+        run_internal_cv(make_net, train_p_obj.patientList, temporal_feats,
+                        encoder, stats, K=args.cv, lr=args.lrs[0],
+                        epochs=args.epochs, wd=args.wd)
+
+
+def run_internal_cv(make_net, train_patients, temporal_feats, encoder, stats,
+                    K, lr, epochs, wd, eval_every=5):
+    """K-fold CV inside train. For each held-out inner fold, train on the rest
+    and collect out-of-fold val predictions. Aggregate AUPR over ALL positives.
+
+    This does NOT touch the outer val/test. It is purely a lower-noise estimate
+    of pretrain quality, to separate metric noise from real instability.
+    """
+    import numpy as np
+    from sklearn.model_selection import StratifiedKFold
+
+    pats = list(train_patients)
+    labels = np.array([
+        1 if getattr(p, "akdPositive", False) else 0 for p in pats])
+    skf = StratifiedKFold(n_splits=K, shuffle=True, random_state=0)
+
+    # We snapshot OOF predictions at a few epoch checkpoints to see a curve.
+    checkpoints = list(range(eval_every, epochs + 1, eval_every))
+    oof = {ep: np.full(len(pats), np.nan) for ep in checkpoints}
+
+    for ki, (tr_idx, va_idx) in enumerate(skf.split(pats, labels)):
+        tr_p = [pats[i] for i in tr_idx]
+        va_p = [pats[i] for i in va_idx]
+        tr_ds = HybridDataset(tr_p, temporal_feats, encoder, stats)
+        va_ds = HybridDataset(va_p, temporal_feats, encoder, stats)
+        tr_ld = DataLoader(tr_ds, batch_size=32, shuffle=True, collate_fn=hybrid_collate_fn)
+        va_ld = DataLoader(va_ds, batch_size=32, shuffle=False, collate_fn=hybrid_collate_fn)
+
+        torch.manual_seed(0); np.random.seed(0)
+        net = make_net().to(DEVICE)
+        head = SupervisedHead(net.latent_dim + len(FIXED_FEATURES)).to(DEVICE)
+        opt = torch.optim.Adam(list(net.parameters()) + list(head.parameters()),
+                               lr=lr, weight_decay=wd)
+        crit = nn.BCELoss()
+        for epoch in range(epochs):
+            net.train(); head.train()
+            for t_data, lbl, s_data in tr_ld:
+                lbl = lbl.to(DEVICE); s_data = s_data.to(DEVICE)
+                z, _, _ = net(t_data, deterministic=True)
+                preds = head(torch.cat([z, s_data], dim=1)).squeeze(-1)
+                loss = crit(preds, lbl)
+                opt.zero_grad(); loss.backward()
+                torch.nn.utils.clip_grad_norm_(
+                    list(net.parameters()) + list(head.parameters()), 1.0)
+                opt.step()
+            if (epoch + 1) in oof:
+                net.eval(); head.eval()
+                preds_all = []
+                with torch.no_grad():
+                    for t_data, lbl, s_data in va_ld:
+                        s_data = s_data.to(DEVICE)
+                        z, _, _ = net(t_data, deterministic=True)
+                        p = head(torch.cat([z, s_data], dim=1)).squeeze(-1)
+                        preds_all.extend(p.cpu().numpy())
+                oof[(epoch + 1)][va_idx] = np.array(preds_all)
+        print(f"  inner fold {ki+1}/{K} done")
+
+    print(f"\n{'ep':>3} | {'OOF_AUPR':>8} | {'OOF_AUC':>7} | (pos={int(labels.sum())}/{len(labels)})")
+    for ep in checkpoints:
+        p = oof[ep]
+        m = ~np.isnan(p)
+        aupr = average_precision_score(labels[m], p[m])
+        try: auc = roc_auc_score(labels[m], p[m])
+        except ValueError: auc = float("nan")
+        print(f"{ep:3d} | {aupr:8.4f} | {auc:7.4f} |")
+    print("\n  Stable OOF curve here + wobbly small-val curve above => cause B.")
 
 
 if __name__ == "__main__":
