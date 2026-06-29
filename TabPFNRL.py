@@ -469,20 +469,22 @@ def train_policy_conservative_rl(
             tabpfn_model = TabPFNClassifier(**tabpfn_params)
             tabpfn_model.fit(X_train, y_train)
 
-        # AUPR-focused rewards
-        X_val_stoch, y_val, _ = extract_enriched_features_and_logprobs(
-            policy_net, val_loader, deterministic=False, temperature=temperature
-        )
+        # (Removed the per-epoch stochastic val forward pass: val_aupr was only
+        # feeding the dropped reward term. Val is now evaluated solely in the
+        # deterministic validation block below, every 5 epochs.)
 
-        y_val_proba = tabpfn_model.predict_proba(X_val_stoch)[:, 1]
-        val_aupr = average_precision_score(y_val, y_val_proba)
-
-        # Per-sample probability quality
+        # Per-sample probability quality (computed on TRAIN samples — these are
+        # the samples whose log_probs we update against, so the reward must be
+        # per-sample and train-derived).
         y_train_proba = tabpfn_model.predict_proba(X_train)[:, 1]
         rewards_smooth = np.where(y_train == 1, y_train_proba, 1 - y_train_proba)
 
-        # Heavily weight AUPR (this is the key!)
-        rewards_combined = rewards_smooth + 0.5 * val_aupr  # Increased from 0.3
+        # Reward is the per-sample train quality only. The previous
+        # `+ 0.5 * val_aupr` term mixed a val-set scalar into the training
+        # signal (val leakage into gradients) while being nearly cancelled by
+        # the mean-subtraction below anyway. Dropped on both counts; val now
+        # serves a single role: early-stopping / checkpoint selection.
+        rewards_combined = rewards_smooth
 
         # Normalize
         rewards_tensor = torch.tensor(rewards_combined, dtype=torch.float32).to(DEVICE)
