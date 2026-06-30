@@ -166,7 +166,7 @@ def oof_reward(Xz_static, Y, clf_name, K=5, seed=0):
 
 # ---------------------------------------------------------------- RLOO RL (scratch)
 def rl_rloo(net, tr_p, te_p, feats, enc, stats, clf, epochs, eval_every,
-            K=4, lr=1e-3, ent_coef=0.01, whiten=True):
+            K=4, lr=1e-3, ent_coef=0.01, whiten=True, val_p=None):
     ref_b, _ = blocks_for_eval(net, tr_p, feats, enc, stats)
     z_ref = ref_b["Z"].copy()
 
@@ -181,11 +181,18 @@ def rl_rloo(net, tr_p, te_p, feats, enc, stats, clf, epochs, eval_every,
 
     def snapshot(ep, rstats):
         net.eval()
-        m = test_dZ(net, tr_p, te_p, feats, enc, stats, clf)
+        m = test_dZ(net, tr_p, te_p, feats, enc, stats, clf)   # te_p = HOLD-OUT
         drift = float(np.linalg.norm(m["trainZ"] - z_ref) / np.sqrt(len(z_ref)))
+        # VAL dZ -- the ONLY signal allowed to pick the epoch (hold-out untouched)
+        if val_p is not None:
+            mv = test_dZ(net, tr_p, val_p, feats, enc, stats, clf)
+            val_dap, val_dau = mv["dAUPR"], mv["dAUC"]
+        else:
+            val_dap, val_dau = np.nan, np.nan
         log.append(dict(epoch=ep, test_dAUPR=m["dAUPR"], test_dAUC=m["dAUC"],
                         base_AUPR=m["base_AUPR"], base_AUC=m["base_AUC"],
                         full_AUPR=m["full_AUPR"], full_AUC=m["full_AUC"],
+                        val_dAUPR=val_dap, val_dAUC=val_dau,
                         drift=drift, **rstats))
 
     snapshot(0, dict(r_mean=np.nan, r_pos=np.nan, r_neg=np.nan,
@@ -255,29 +262,38 @@ def rl_rloo(net, tr_p, te_p, feats, enc, stats, clf, epochs, eval_every,
 
 
 # ---------------------------------------------------------------- report
-def report(fold, log, K):
-    te_ap = np.array([r["test_dAUPR"] for r in log])
-    te_au = np.array([r["test_dAUC"]  for r in log])
-    eps   = np.array([r["epoch"]      for r in log])
-    final_i = len(log) - 1; best_i = int(np.argmax(te_ap))
-    f = log[final_i]
+def report(fold, log, K, stop_metric="AUC"):
+    """Pick the epoch by VAL dZ (early-stop signal), then report the HOLD-OUT dZ
+    AT that epoch. Hold-out never participates in epoch selection."""
+    val_key = "val_dAUC" if stop_metric == "AUC" else "val_dAUPR"
+    val = np.array([r[val_key] for r in log])
+    # epoch 0 is random-init; allow it to be the pick too (no-train baseline)
+    if np.all(np.isnan(val)):
+        stop_i = len(log) - 1                      # no val -> last epoch
+    else:
+        stop_i = int(np.nanargmax(val))
+    final_i = len(log) - 1
+    sel = log[stop_i]; fin = log[final_i]
 
-    print(f"\n----  FOLD {fold}  RLOO K={K}  ----")
-    print(f"  {'ep':>3} | {'base_AUPR':>9} {'full_AUPR':>9} | {'base_AUC':>8} {'full_AUC':>8} "
-          f"| {'dAUPR':>7} {'dAUC':>7} | {'A_pos':>6} | {'drift':>5}")
-    for r in log:
-        print(f"  {r['epoch']:>3} | {r['base_AUPR']:>9.4f} {r['full_AUPR']:>9.4f} | "
-              f"{r['base_AUC']:>8.4f} {r['full_AUC']:>8.4f} | "
-              f"{r['test_dAUPR']:>+7.4f} {r['test_dAUC']:>+7.4f} | "
-              f"{r['A_pos']:>+6.2f} | {r['drift']:>5.2f}")
-    print(f"  FINAL: S+L   AUPR {f['base_AUPR']:.4f}  AUC {f['base_AUC']:.4f}")
-    print(f"         S+L+Z AUPR {f['full_AUPR']:.4f}  AUC {f['full_AUC']:.4f}  "
-          f"(dZ AUPR {f['test_dAUPR']:+.4f} | dZ AUC {f['test_dAUC']:+.4f})")
-    return dict(fold=fold,
-                base_ap=f['base_AUPR'], base_au=f['base_AUC'],
-                full_ap=f['full_AUPR'], full_au=f['full_AUC'],
-                final_ap=f['test_dAUPR'], final_au=f['test_dAUC'],
-                start=log[0]['test_dAUPR'], best=te_ap[best_i])
+    print(f"\n----  FOLD {fold}  RLOO K={K}  (stop on val-{stop_metric})  ----")
+    print(f"  {'ep':>3} | {'val_dAUC':>8} {'val_dAUPR':>9} | "
+          f"{'ho_dAUC':>8} {'ho_dAUPR':>9} | {'ho_full_AUC':>11} | {'A_pos':>6} {'drift':>5}")
+    for i, r in enumerate(log):
+        mark = " <== stop" if i == stop_i else ""
+        print(f"  {r['epoch']:>3} | {r['val_dAUC']:>+8.4f} {r['val_dAUPR']:>+9.4f} | "
+              f"{r['test_dAUC']:>+8.4f} {r['test_dAUPR']:>+9.4f} | "
+              f"{r['full_AUC']:>11.4f} | {r['A_pos']:>+6.2f} {r['drift']:>5.2f}{mark}")
+    print(f"  SELECTED ep{sel['epoch']} by val-{stop_metric}: "
+          f"HOLD-OUT  S+L AUC {sel['base_AUC']:.4f} AUPR {sel['base_AUPR']:.4f} | "
+          f"S+L+Z AUC {sel['full_AUC']:.4f} AUPR {sel['full_AUPR']:.4f} | "
+          f"dZ AUC {sel['test_dAUC']:+.4f} dZ AUPR {sel['test_dAUPR']:+.4f}")
+    print(f"  (for reference, FINAL ep{fin['epoch']}: dZ AUC {fin['test_dAUC']:+.4f} "
+          f"dZ AUPR {fin['test_dAUPR']:+.4f})")
+    return dict(fold=fold, stop_ep=sel['epoch'],
+                base_ap=sel['base_AUPR'], base_au=sel['base_AUC'],
+                full_ap=sel['full_AUPR'], full_au=sel['full_AUC'],
+                final_ap=sel['test_dAUPR'], final_au=sel['test_dAUC'],
+                final_ep_ap=fin['test_dAUPR'], final_ep_au=fin['test_dAUC'])
 
 
 def main():
@@ -298,6 +314,8 @@ def main():
     pa.add_argument("--lr", type=float, default=1e-3)
     pa.add_argument("--ent_coef", type=float, default=0.01)
     pa.add_argument("--no_whiten", action="store_true")
+    pa.add_argument("--stop_metric", default="AUC", choices=["AUC", "AUPR"],
+                    help="val metric used to pick the early-stop epoch")
     pa.add_argument("--seed", type=int, default=27)
     args = pa.parse_args()
 
@@ -316,7 +334,7 @@ def run_folds(patients, feats, enc, args):
     summ = []
     for fi in args.folds:
         train_full, test_p = all_folds[fi]
-        tr_obj, _ = split_patients_train_val(train_full, val_ratio=0.1, seed=42)
+        tr_obj, val_obj = split_patients_train_val(train_full, val_ratio=0.1, seed=42)
         tp = tr_obj.patientList
         stats = HybridDataset(tp, feats, enc).get_normalization_stats()
         torch.manual_seed(0); np.random.seed(0)
@@ -324,9 +342,9 @@ def run_folds(patients, feats, enc, args):
         log = rl_rloo(net, tp, test_p.patientList, feats, enc, stats,
                       clf=args.clf, epochs=args.rl_epochs, eval_every=args.eval_every,
                       K=args.K, lr=args.lr, ent_coef=args.ent_coef,
-                      whiten=not args.no_whiten)
-        summ.append(report(fi, log, args.K))
-    print_summary(summ, "RLOO scratch, per-fold test")
+                      whiten=not args.no_whiten, val_p=val_obj.patientList)
+        summ.append(report(fi, log, args.K, stop_metric=args.stop_metric))
+    print_summary(summ, f"RLOO scratch, per-fold, early-stop on val-{args.stop_metric}")
 
 
 def run_holdout(patients, feats, enc, args):
@@ -338,13 +356,14 @@ def run_holdout(patients, feats, enc, args):
           f"N_remainder={len(rem)}  FROZEN, never seen in training", flush=True)
 
     summ = []
-    for rep in range(args.reps):
-        # SAME hold-out every replicate; only the remainder train/val carve and
-        # the init seed change. Spread across replicates = training noise.
-        rng = np.random.RandomState(1000 + rep)
-        idx = np.arange(len(rem)); rng.shuffle(idx)
-        n_val = int(len(rem) * 0.1)
-        tr_list = [rem[i] for i in idx[n_val:]]
+    # K-fold the REMAINDER. Each replicate uses one fold as VAL (for early-stop),
+    # the other folds as TRAIN. Hold-out is scored only at the val-selected epoch.
+    from sklearn.model_selection import StratifiedKFold
+    skf = StratifiedKFold(n_splits=args.reps, shuffle=True, random_state=args.seed)
+    rem_arr = np.array(rem, dtype=object)
+    for rep, (tr_idx, va_idx) in enumerate(skf.split(rem, remY)):
+        tr_list = [rem[i] for i in tr_idx]
+        val_list = [rem[i] for i in va_idx]
         stats = HybridDataset(tr_list, feats, enc).get_normalization_stats()
 
         torch.manual_seed(rep); np.random.seed(rep)
@@ -352,28 +371,35 @@ def run_holdout(patients, feats, enc, args):
         log = rl_rloo(net, tr_list, ho, feats, enc, stats,
                       clf=args.clf, epochs=args.rl_epochs, eval_every=args.eval_every,
                       K=args.K, lr=args.lr, ent_coef=args.ent_coef,
-                      whiten=not args.no_whiten)
-        summ.append(report(f"rep{rep}", log, args.K))
+                      whiten=not args.no_whiten, val_p=val_list)
+        summ.append(report(f"fold{rep}", log, args.K, stop_metric=args.stop_metric))
 
-    print_summary(summ, "RLOO scratch, FROZEN hold-out (spread = training noise)")
+    print_summary(summ, f"RLOO scratch, {args.reps}-fold on remainder, "
+                        f"early-stop on val-{args.stop_metric}, scored on FROZEN hold-out")
 
 
 def print_summary(summ, title):
     print(f"\n\n================  SUMMARY ({title})  ================")
-    print(f"  {'unit':>6} | {'S+L AUPR':>9} {'+Z AUPR':>9} {'dZ_AP':>7} | "
-          f"{'S+L AUC':>9} {'+Z AUC':>9} {'dZ_AU':>7}")
+    print(f"  {'unit':>6} {'ep':>4} | {'S+L AUC':>8} {'+Z AUC':>8} {'dZ_AU':>7} | "
+          f"{'S+L AUPR':>9} {'+Z AUPR':>8} {'dZ_AP':>7} | {'final_dAU':>9}")
     for s in summ:
-        print(f"  {str(s['fold']):>6} | {s['base_ap']:>9.4f} {s['full_ap']:>9.4f} "
-              f"{s['final_ap']:>+7.4f} | {s['base_au']:>9.4f} {s['full_au']:>9.4f} "
-              f"{s['final_au']:>+7.4f}")
+        print(f"  {str(s['fold']):>6} {s['stop_ep']:>4} | "
+              f"{s['base_au']:>8.4f} {s['full_au']:>8.4f} {s['final_au']:>+7.4f} | "
+              f"{s['base_ap']:>9.4f} {s['full_ap']:>8.4f} {s['final_ap']:>+7.4f} | "
+              f"{s['final_ep_au']:>+9.4f}")
 
     bap = np.array([s['base_ap'] for s in summ]); fap = np.array([s['full_ap'] for s in summ])
     bau = np.array([s['base_au'] for s in summ]); fau = np.array([s['full_au'] for s in summ])
-    print(f"\n  MEAN±STD across {len(summ)} units:")
-    print(f"    AUPR:  S+L {bap.mean():.4f}±{bap.std():.4f}  |  S+L+Z {fap.mean():.4f}±{fap.std():.4f}"
-          f"  |  dZ {(fap-bap).mean():+.4f}  wins {int((fap>bap).sum())}/{len(summ)}")
-    print(f"    AUC :  S+L {bau.mean():.4f}±{bau.std():.4f}  |  S+L+Z {fau.mean():.4f}±{fau.std():.4f}"
-          f"  |  dZ {(fau-bau).mean():+.4f}  wins {int((fau>bau).sum())}/{len(summ)}")
+    dau_sel = np.array([s['final_au'] for s in summ])
+    dau_fin = np.array([s['final_ep_au'] for s in summ])
+    print(f"\n  At val-selected epoch, across {len(summ)} folds:")
+    print(f"    AUC :  S+L {bau.mean():.4f}±{bau.std():.4f} | S+L+Z {fau.mean():.4f}±{fau.std():.4f}"
+          f" | dZ {(fau-bau).mean():+.4f} wins {int((fau>bau).sum())}/{len(summ)}")
+    print(f"    AUPR:  S+L {bap.mean():.4f}±{bap.std():.4f} | S+L+Z {fap.mean():.4f}±{fap.std():.4f}"
+          f" | dZ {(fap-bap).mean():+.4f} wins {int((fap>bap).sum())}/{len(summ)}")
+    print(f"\n  early-stop vs run-to-end (dZ-AUC): "
+          f"selected {dau_sel.mean():+.4f} | final-epoch {dau_fin.mean():+.4f} | "
+          f"gain {(dau_sel-dau_fin).mean():+.4f}")
 
 
 if __name__ == "__main__":
