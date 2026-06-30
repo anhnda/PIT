@@ -140,11 +140,13 @@ def fit_score(tr_b, tr_Y, te_b, te_Y, spec, clf_name):
 
 
 def test_dZ(net, tr_p, te_p, feats, enc, stats, clf):
+    """Returns dict with dZ AND absolute base (S+L) / full (S+L+Z) for AUPR+AUC."""
     tr_b, tr_Y = blocks_for_eval(net, tr_p, feats, enc, stats)
     te_b, te_Y = blocks_for_eval(net, te_p, feats, enc, stats)
     a0, c0 = fit_score(tr_b, tr_Y, te_b, te_Y, ["S", "L"], clf)
     a1, c1 = fit_score(tr_b, tr_Y, te_b, te_Y, ["S", "L", "Z"], clf)
-    return (a1 - a0, c1 - c0)
+    return dict(dAUPR=a1 - a0, dAUC=c1 - c0,
+                base_AUPR=a0, base_AUC=c0, full_AUPR=a1, full_AUC=c1)
 
 
 # ---------------------------------------------------------------- reward
@@ -177,11 +179,13 @@ def rl_rloo(net, tr_p, te_p, feats, enc, stats, clf, epochs, eval_every,
 
     def snapshot(ep, rstats):
         net.eval()
-        te_dap, te_dau = test_dZ(net, tr_p, te_p, feats, enc, stats, clf)
+        m = test_dZ(net, tr_p, te_p, feats, enc, stats, clf)
         cur_b, _ = blocks_for_eval(net, tr_p, feats, enc, stats)
         drift = float(np.linalg.norm(cur_b["Z"] - z_ref) / np.sqrt(len(z_ref)))
-        log.append(dict(epoch=ep, test_dAUPR=te_dap, test_dAUC=te_dau, drift=drift,
-                        **rstats))
+        log.append(dict(epoch=ep, test_dAUPR=m["dAUPR"], test_dAUC=m["dAUC"],
+                        base_AUPR=m["base_AUPR"], base_AUC=m["base_AUC"],
+                        full_AUPR=m["full_AUPR"], full_AUC=m["full_AUC"],
+                        drift=drift, **rstats))
 
     snapshot(0, dict(r_mean=np.nan, r_pos=np.nan, r_neg=np.nan,
                      grad=np.nan, A_pos=np.nan, A_neg=np.nan))
@@ -254,19 +258,25 @@ def report(fold, log, K):
     te_ap = np.array([r["test_dAUPR"] for r in log])
     te_au = np.array([r["test_dAUC"]  for r in log])
     eps   = np.array([r["epoch"]      for r in log])
-    start_ap = te_ap[0]; best_i = int(np.argmax(te_ap)); final_i = len(log) - 1
+    final_i = len(log) - 1; best_i = int(np.argmax(te_ap))
+    f = log[final_i]
 
     print(f"\n----  FOLD {fold}  RLOO K={K}  ----")
-    print(f"  {'ep':>3} | {'test_dAUPR':>10} {'test_dAUC':>9} | {'drift':>6} | "
-          f"{'r_pos':>6} {'r_neg':>6} {'A_pos':>7} {'A_neg':>7} | {'grad':>5}")
+    print(f"  {'ep':>3} | {'base_AUPR':>9} {'full_AUPR':>9} | {'base_AUC':>8} {'full_AUC':>8} "
+          f"| {'dAUPR':>7} {'dAUC':>7} | {'A_pos':>6} | {'drift':>5}")
     for r in log:
-        print(f"  {r['epoch']:>3} | {r['test_dAUPR']:>+10.4f} {r['test_dAUC']:>+9.4f} | "
-              f"{r['drift']:>6.3f} | {r['r_pos']:>6.3f} {r['r_neg']:>6.3f} "
-              f"{r['A_pos']:>+7.3f} {r['A_neg']:>+7.3f} | {r['grad']:>5.2f}")
-    print(f"  start {start_ap:+.4f} | best {te_ap[best_i]:+.4f} @ep{eps[best_i]} "
-          f"| final {te_ap[final_i]:+.4f} (AUPR)  ||  final AUC {te_au[final_i]:+.4f}")
-    return dict(fold=fold, start=start_ap, best=te_ap[best_i],
-                final_ap=te_ap[final_i], final_au=te_au[final_i])
+        print(f"  {r['epoch']:>3} | {r['base_AUPR']:>9.4f} {r['full_AUPR']:>9.4f} | "
+              f"{r['base_AUC']:>8.4f} {r['full_AUC']:>8.4f} | "
+              f"{r['test_dAUPR']:>+7.4f} {r['test_dAUC']:>+7.4f} | "
+              f"{r['A_pos']:>+6.2f} | {r['drift']:>5.2f}")
+    print(f"  FINAL: S+L   AUPR {f['base_AUPR']:.4f}  AUC {f['base_AUC']:.4f}")
+    print(f"         S+L+Z AUPR {f['full_AUPR']:.4f}  AUC {f['full_AUC']:.4f}  "
+          f"(dZ AUPR {f['test_dAUPR']:+.4f} | dZ AUC {f['test_dAUC']:+.4f})")
+    return dict(fold=fold,
+                base_ap=f['base_AUPR'], base_au=f['base_AUC'],
+                full_ap=f['full_AUPR'], full_au=f['full_AUC'],
+                final_ap=f['test_dAUPR'], final_au=f['test_dAUC'],
+                start=log[0]['test_dAUPR'], best=te_ap[best_i])
 
 
 def main():
@@ -345,24 +355,24 @@ def run_holdout(patients, feats, enc, args):
         summ.append(report(f"rep{rep}", log, args.K))
 
     print_summary(summ, "RLOO scratch, FROZEN hold-out (spread = training noise)")
-    fa = np.array([s['final_ap'] for s in summ]); fu = np.array([s['final_au'] for s in summ])
-    print(f"\n  hold-out dZ over {args.reps} replicates:")
-    print(f"    AUPR  mean {fa.mean():+.4f} ± {fa.std():.4f} | wins>0 {int((fa>0).sum())}/{len(fa)}")
-    print(f"    AUC   mean {fu.mean():+.4f} ± {fu.std():.4f} | wins>0 {int((fu>0).sum())}/{len(fu)}")
 
 
 def print_summary(summ, title):
     print(f"\n\n================  SUMMARY ({title})  ================")
-    print(f"  {'unit':>6} | {'start_AUPR':>10} {'best_AUPR':>10} {'final_AUPR':>10} "
-          f"{'final_AUC':>10} | {'AUPR>0?':>8}")
+    print(f"  {'unit':>6} | {'S+L AUPR':>9} {'+Z AUPR':>9} {'dZ_AP':>7} | "
+          f"{'S+L AUC':>9} {'+Z AUC':>9} {'dZ_AU':>7}")
     for s in summ:
-        flag = "YES" if s['final_ap'] > 0 else "no"
-        print(f"  {str(s['fold']):>6} | {s['start']:>+10.4f} {s['best']:>+10.4f} "
-              f"{s['final_ap']:>+10.4f} {s['final_au']:>+10.4f} | {flag:>8}")
-    print("\n  Watch A_pos in the per-unit tables. Single-sample REINFORCE had")
-    print("  positive advantage stuck negative (~-1.7) -> positives pushed away.")
-    print("  If RLOO lifts A_pos toward 0+ and AUPR rises, variance was part of")
-    print("  the problem. If A_pos stays negative, the reward is the wall.")
+        print(f"  {str(s['fold']):>6} | {s['base_ap']:>9.4f} {s['full_ap']:>9.4f} "
+              f"{s['final_ap']:>+7.4f} | {s['base_au']:>9.4f} {s['full_au']:>9.4f} "
+              f"{s['final_au']:>+7.4f}")
+
+    bap = np.array([s['base_ap'] for s in summ]); fap = np.array([s['full_ap'] for s in summ])
+    bau = np.array([s['base_au'] for s in summ]); fau = np.array([s['full_au'] for s in summ])
+    print(f"\n  MEAN±STD across {len(summ)} units:")
+    print(f"    AUPR:  S+L {bap.mean():.4f}±{bap.std():.4f}  |  S+L+Z {fap.mean():.4f}±{fap.std():.4f}"
+          f"  |  dZ {(fap-bap).mean():+.4f}  wins {int((fap>bap).sum())}/{len(summ)}")
+    print(f"    AUC :  S+L {bau.mean():.4f}±{bau.std():.4f}  |  S+L+Z {fau.mean():.4f}±{fau.std():.4f}"
+          f"  |  dZ {(fau-bau).mean():+.4f}  wins {int((fau>bau).sum())}/{len(summ)}")
 
 
 if __name__ == "__main__":
