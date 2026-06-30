@@ -76,6 +76,35 @@ def make_net(enc_kind, n_feat):
     return Net(input_dim=n_feat, hidden_dim=20, latent_dim=28, time_dim=32)
 
 
+# ---------------------------------------------------------------- frozen hold-out
+def cohort_labels(patientList, feats, enc):
+    """One block pass over the whole cohort to get labels, in list order."""
+    ds = HybridDataset(patientList, feats, enc)
+    ld = DataLoader(ds, batch_size=64, shuffle=False, collate_fn=hybrid_collate_fn)
+    Y = []
+    for _, lbl, _ in ld:
+        Y.extend(lbl.numpy().tolist())
+    return np.array(Y, dtype=int)
+
+
+def stratified_holdout(patientList, Y, frac, seed):
+    """Carve a stratified hold-out (never seen in training). Returns
+    (holdout_list, remainder_list, holdout_Y, remainder_Y)."""
+    rng = np.random.RandomState(seed)
+    idx = np.arange(len(patientList))
+    hold = []
+    for c in (0, 1):
+        ci = idx[Y == c]; rng.shuffle(ci)
+        n_h = int(round(len(ci) * frac))
+        hold.extend(ci[:n_h].tolist())
+    hold = set(hold)
+    ho  = [patientList[i] for i in idx if i in hold]
+    rem = [patientList[i] for i in idx if i not in hold]
+    hoY = Y[[i for i in idx if i in hold]]
+    remY = Y[[i for i in idx if i not in hold]]
+    return ho, rem, hoY, remY
+
+
 # ---------------------------------------------------------------- blocks (S,L,Z)
 def blocks_for_eval(net, patients, feats, enc, stats):
     ds = HybridDataset(patients, feats, enc, stats)
@@ -237,9 +266,15 @@ def report(fold, log, K):
 def main():
     pa = argparse.ArgumentParser()
     pa.add_argument("--kfold", type=int, default=10)
-    pa.add_argument("--folds", type=int, nargs="+", default=[8, 9])
+    pa.add_argument("--folds", type=int, nargs="+", default=[8, 9],
+                    help="(fold mode) ignored when --holdout is set")
+    pa.add_argument("--holdout", action="store_true",
+                    help="frozen stratified hold-out + CV-replicates on remainder")
+    pa.add_argument("--holdout_frac", type=float, default=0.2)
+    pa.add_argument("--holdout_seed", type=int, default=12345)
+    pa.add_argument("--reps", type=int, default=5)
     pa.add_argument("--clf", default="tabpfn", choices=["xgb", "cat", "tabpfn"])
-    pa.add_argument("--K", type=int, default=4, help="number of policy samples for RLOO")
+    pa.add_argument("--K", type=int, default=4, help="policy samples for RLOO")
     pa.add_argument("--encoder", default="final", choices=["final", "pool"])
     pa.add_argument("--rl_epochs", type=int, default=80)
     pa.add_argument("--eval_every", type=int, default=4)
@@ -252,15 +287,21 @@ def main():
     patients = load_and_prepare_patients()
     feats = get_all_temporal_features(patients)
     enc = SimpleStaticEncoder(FIXED_FEATURES); enc.fit(patients.patientList)
-    all_folds = list(trainTestPatients(patients, k=args.kfold, seed=args.seed))
 
+    if args.holdout:
+        run_holdout(patients, feats, enc, args)
+    else:
+        run_folds(patients, feats, enc, args)
+
+
+def run_folds(patients, feats, enc, args):
+    all_folds = list(trainTestPatients(patients, k=args.kfold, seed=args.seed))
     summ = []
     for fi in args.folds:
         train_full, test_p = all_folds[fi]
         tr_obj, _ = split_patients_train_val(train_full, val_ratio=0.1, seed=42)
         tp = tr_obj.patientList
         stats = HybridDataset(tp, feats, enc).get_normalization_stats()
-
         torch.manual_seed(0); np.random.seed(0)
         net = make_net(args.encoder, len(feats)).to(DEVICE)
         log = rl_rloo(net, tp, test_p.patientList, feats, enc, stats,
@@ -268,20 +309,54 @@ def main():
                       K=args.K, lr=args.lr, ent_coef=args.ent_coef,
                       whiten=not args.no_whiten)
         summ.append(report(fi, log, args.K))
+    print_summary(summ, "RLOO scratch, per-fold test")
 
-    print("\n\n================  SUMMARY (RLOO, scratch)  ================")
-    print(f"  {'fold':>4} | {'start_AUPR':>10} {'best_AUPR':>10} {'final_AUPR':>10} "
+
+def run_holdout(patients, feats, enc, args):
+    pl = patients.patientList
+    Y_all = cohort_labels(pl, feats, enc)
+    ho, rem, hoY, remY = stratified_holdout(pl, Y_all, args.holdout_frac, args.holdout_seed)
+    print(f"[holdout] frac~{args.holdout_frac:g} seed={args.holdout_seed} "
+          f"N_holdout={len(ho)} (pos {int(hoY.sum())}, rate {hoY.mean():.3f}) | "
+          f"N_remainder={len(rem)}  FROZEN, never seen in training", flush=True)
+
+    summ = []
+    for rep in range(args.reps):
+        # SAME hold-out every replicate; only the remainder train/val carve and
+        # the init seed change. Spread across replicates = training noise.
+        rng = np.random.RandomState(1000 + rep)
+        idx = np.arange(len(rem)); rng.shuffle(idx)
+        n_val = int(len(rem) * 0.1)
+        tr_list = [rem[i] for i in idx[n_val:]]
+        stats = HybridDataset(tr_list, feats, enc).get_normalization_stats()
+
+        torch.manual_seed(rep); np.random.seed(rep)
+        net = make_net(args.encoder, len(feats)).to(DEVICE)
+        log = rl_rloo(net, tr_list, ho, feats, enc, stats,
+                      clf=args.clf, epochs=args.rl_epochs, eval_every=args.eval_every,
+                      K=args.K, lr=args.lr, ent_coef=args.ent_coef,
+                      whiten=not args.no_whiten)
+        summ.append(report(f"rep{rep}", log, args.K))
+
+    print_summary(summ, "RLOO scratch, FROZEN hold-out (spread = training noise)")
+    fa = np.array([s['final_ap'] for s in summ]); fu = np.array([s['final_au'] for s in summ])
+    print(f"\n  hold-out dZ over {args.reps} replicates:")
+    print(f"    AUPR  mean {fa.mean():+.4f} ± {fa.std():.4f} | wins>0 {int((fa>0).sum())}/{len(fa)}")
+    print(f"    AUC   mean {fu.mean():+.4f} ± {fu.std():.4f} | wins>0 {int((fu>0).sum())}/{len(fu)}")
+
+
+def print_summary(summ, title):
+    print(f"\n\n================  SUMMARY ({title})  ================")
+    print(f"  {'unit':>6} | {'start_AUPR':>10} {'best_AUPR':>10} {'final_AUPR':>10} "
           f"{'final_AUC':>10} | {'AUPR>0?':>8}")
     for s in summ:
         flag = "YES" if s['final_ap'] > 0 else "no"
-        print(f"  {s['fold']:>4} | {s['start']:>+10.4f} {s['best']:>+10.4f} "
+        print(f"  {str(s['fold']):>6} | {s['start']:>+10.4f} {s['best']:>+10.4f} "
               f"{s['final_ap']:>+10.4f} {s['final_au']:>+10.4f} | {flag:>8}")
-    print("\n  Compare against single-sample REINFORCE (debug_rl_reward base@1e-3):")
-    print("    fold 8 was final AUPR -0.0113 ; fold 9 ~ +0.031.")
-    print("  Watch A_pos: single-sample had positive advantage stuck negative.")
-    print("  If RLOO lifts A_pos toward 0+ and final AUPR rises, the baseline")
-    print("  (variance), not the reward, was part of the AUPR problem. If A_pos")
-    print("  stays negative, the reward itself is the wall -- not fixable by RLOO.")
+    print("\n  Watch A_pos in the per-unit tables. Single-sample REINFORCE had")
+    print("  positive advantage stuck negative (~-1.7) -> positives pushed away.")
+    print("  If RLOO lifts A_pos toward 0+ and AUPR rises, variance was part of")
+    print("  the problem. If A_pos stays negative, the reward is the wall.")
 
 
 if __name__ == "__main__":
