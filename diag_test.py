@@ -21,6 +21,7 @@ Run:  python diag_test.py --clf xgb --encoder pool --head weak
 import argparse, copy, numpy as np, torch, torch.nn as nn, torch.nn.functional as F
 from torch.utils.data import DataLoader
 from sklearn.metrics import average_precision_score, roc_auc_score
+from scipy import stats as sp_stats
 
 from TabPFNRL import (
     FIXED_FEATURES, RNNPolicyNetwork, HybridDataset, hybrid_collate_fn,
@@ -164,7 +165,9 @@ def fit_score(tr_b, tr_Y, te_b, te_Y, spec, clf):
 
 def main():
     pa=argparse.ArgumentParser()
-    pa.add_argument("--folds", type=int, nargs="+", default=[0,1,2,3,4])
+    pa.add_argument("--kfold", type=int, default=5, help="number of outer CV folds")
+    pa.add_argument("--folds", type=int, nargs="+", default=None,
+                    help="which fold indices to run (default: all 0..kfold-1)")
     pa.add_argument("--clf", nargs="+", default=["xgb"])
     pa.add_argument("--encoder", default="pool", choices=["final","pool"])
     pa.add_argument("--head", nargs="+", default=["weak"],
@@ -172,11 +175,13 @@ def main():
     pa.add_argument("--epochs", type=int, default=20)
     pa.add_argument("--seed", type=int, default=27)
     args=pa.parse_args()
+    if args.folds is None:
+        args.folds = list(range(args.kfold))
 
     patients=load_and_prepare_patients()
     feats=get_all_temporal_features(patients)
     enc=SimpleStaticEncoder(FIXED_FEATURES); enc.fit(patients.patientList)
-    folds=list(trainTestPatients(patients, seed=args.seed))
+    folds=list(trainTestPatients(patients, k=args.kfold, seed=args.seed))
 
     # res[clf][head] = list per fold of dict(dAUPR,dAUC,zaupr, base_aupr, full_aupr)
     res={c:{h:[] for h in args.head} for c in args.clf}
@@ -240,6 +245,27 @@ def main():
                 print(f"    Z  over S+L      (S+L+Z)-(S+L)    : {dl('S+L+Z','S+L',suf)}")
                 print(f"    Z over S+L+MS  (S+L+MS+Z)-(S+L+MS): {dl('S+L+MS+Z','S+L+MS',suf)}")
                 print(f"    Z-alone {metric}: {za:.4f}")
+
+            # ---- significance: S+L+Z vs S+L, paired across folds ----
+            print(f"    --- significance: S+L+Z vs S+L (paired, n={len(rows)} folds) ---")
+            for metric, suf in [("AUC-ROC", "@auc"), ("AUPR", "")]:
+                a = np.array([r["S+L+Z"+suf] for r in rows])
+                b = np.array([r["S+L"+suf] for r in rows])
+                d = a - b
+                n = len(d)
+                # paired t-test
+                t_stat, t_p = sp_stats.ttest_rel(a, b)
+                # Wilcoxon signed-rank (non-parametric); guard zero-diff / tiny n
+                try:
+                    w_stat, w_p = sp_stats.wilcoxon(a, b)
+                    w_str = f"W={w_stat:.1f}, p={w_p:.4f}"
+                except ValueError as e:
+                    w_str = f"n/a ({e})"
+                # Cohen's d_z for paired effect size
+                dz = d.mean() / (d.std(ddof=1) + 1e-12)
+                print(f"    [{metric}] mean dZ={d.mean():+.4f}  "
+                      f"paired-t: t={t_stat:+.3f}, p={t_p:.4f}  |  "
+                      f"Wilcoxon: {w_str}  |  Cohen dz={dz:+.2f}")
 
 
 if __name__=="__main__":
