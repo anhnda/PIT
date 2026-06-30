@@ -23,6 +23,7 @@ from TabPFNRL import (
     FIXED_FEATURES, SupervisedHead, RNNPolicyNetwork,
     HybridDataset, hybrid_collate_fn, SimpleStaticEncoder,
 )
+from pooled_encoder import PooledRNNPolicyNetwork
 from TimeEmbedding import DEVICE
 from TimeEmbeddingVal import (
     get_all_temporal_features, split_patients_train_val,
@@ -121,6 +122,9 @@ def main():
     pa.add_argument("--seed", type=int, default=27)
     pa.add_argument("--clf", nargs="+", default=["xgb", "cat"],
                     choices=["xgb", "cat", "tabpfn"])
+    pa.add_argument("--encoder", default="pool", choices=["final", "pool"],
+                    help="final = original last-hidden-state RNN; "
+                         "pool = statistical-pooling encoder (mean/std/max/last)")
     args = pa.parse_args()
 
     patients = load_and_prepare_patients()
@@ -134,8 +138,11 @@ def main():
     train_patients = train_p_obj.patientList
 
     def make_net():
-        return RNNPolicyNetwork(input_dim=len(temporal_feats),
-                                hidden_dim=20, latent_dim=28, time_dim=32)
+        Net = RNNPolicyNetwork if args.encoder == "final" else PooledRNNPolicyNetwork
+        return Net(input_dim=len(temporal_feats),
+                   hidden_dim=20, latent_dim=28, time_dim=32)
+
+    print(f"[encoder = {args.encoder}]")
 
     stats = HybridDataset(train_patients, temporal_feats, encoder).get_normalization_stats()
     print(f"Pretraining encoder ({args.pretrain_epochs} ep) on {len(train_patients)} patients...")
