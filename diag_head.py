@@ -224,8 +224,9 @@ def main():
     enc = SimpleStaticEncoder(FIXED_FEATURES); enc.fit(patients.patientList)
     all_folds = list(trainTestPatients(patients, seed=args.seed))
 
-    # dZ[clf][head] = list of (dAUPR, dAUC) across folds
+    # dZ[clf][head] = list of (dAUPR, dAUC); zalone[clf][head] = list of AUPR
     dZ = {c: {h: [] for h in args.heads} for c in args.clf}
+    zalone = {c: {h: [] for h in args.heads} for c in args.clf}
 
     for fi in args.folds:
         train_full, _ = all_folds[fi]
@@ -243,6 +244,8 @@ def main():
                 a0, c0 = oof(b, Y, ["S", "L"], c, seed=args.seed)
                 a1, c1 = oof(b, Y, ["S", "L", "Z"], c, seed=args.seed)
                 dZ[c][h].append((a1 - a0, c1 - c0))
+                az, _ = oof(b, Y, ["Z"], c, seed=args.seed)  # z alone -> leak check
+                zalone[c][h].append(az)
         print(f"fold {fi} done", flush=True)
 
     def ms(vals, i):
@@ -252,11 +255,18 @@ def main():
         print(f"\n=== transfer dZ = (S+L+Z)-(S+L), clf={c}, {len(args.folds)} folds ===")
         print(f"{'head':<8} | {'dAUPR mean±std':>18} | {'dAUC mean±std':>18}")
         print("-" * 50)
+        print(f"{'head':<10} | {'dAUPR mean±std':>18} | {'Z-alone AUPR':>13} | flag")
+        print("-" * 60)
         for h in args.heads:
             am, asd = ms(dZ[c][h], 0); cm, csd = ms(dZ[c][h], 1)
+            za = np.mean(zalone[c][h])
             fa = "OK" if abs(am) > asd else "noise"
-            print(f"{h:<8} | {am:+.4f} ± {asd:.4f} [{fa:>5}] | {cm:+.4f} ± {csd:.4f}")
-        print("  higher dZ = z transfers better to this classifier.")
+            # z alone should be modest (z complements static). If z alone is very
+            # high, z has absorbed the label directly -> leak, not learning.
+            leak = "  <-- LEAK? z alone too predictive" if za > 0.75 else ""
+            print(f"{h:<10} | {am:+.4f} ± {asd:.4f} [{fa:>5}] | {za:13.4f} | {leak}")
+        print("  Z-alone is z predicting the label by itself. Modest = z complements")
+        print("  static. Very high (>0.75) = label leaked into z during pretrain.")
 
 
 if __name__ == "__main__":
