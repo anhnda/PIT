@@ -67,7 +67,31 @@ class StrongHead(nn.Module):  # deeper, wider, low dropout -> can overfit z
     def forward(self, x): return torch.sigmoid(self.net(x)).squeeze(-1)
 
 
-HEADS = {"linear": LinearHead, "weak": WeakHead, "strong": StrongHead}
+class GatedDecisionHead(nn.Module):
+    """Gated head meant to mimic tree-classifier (XGBoost/CatBoost) logic:
+    a sigmoid feature gate (soft feature selection like a tree's splits) +
+    GLU layers (conditional gating) + residual. Tests whether pretraining the
+    encoder through a head shaped like the downstream tree classifier yields a
+    z that transfers better to XGBoost/CatBoost than a plain MLP head."""
+    def __init__(self, in_dim, hidden_dim=64, dropout=0.3):
+        super().__init__()
+        self.gate = nn.Sequential(nn.Linear(in_dim, in_dim), nn.Sigmoid())
+        self.fc1 = nn.Linear(in_dim, hidden_dim * 2)
+        self.fc2 = nn.Linear(hidden_dim, hidden_dim * 2)
+        self.dropout = nn.Dropout(dropout)
+        self.final = nn.Linear(hidden_dim, 1)
+    def forward(self, x):
+        x = x * self.gate(x)
+        out = F.glu(self.fc1(x), dim=-1)
+        out = self.dropout(out)
+        residual = out
+        out = F.glu(self.fc2(out), dim=-1)
+        out = out + residual
+        return torch.sigmoid(self.final(out)).squeeze(-1)
+
+
+HEADS = {"linear": LinearHead, "weak": WeakHead, "strong": StrongHead,
+         "gated": GatedDecisionHead}
 
 
 def make_clf(name, ratio):
@@ -144,9 +168,9 @@ def oof(b, Y, spec, clf, K=5, seed=0):
 def main():
     pa = argparse.ArgumentParser()
     pa.add_argument("--folds", type=int, nargs="+", default=[0, 1, 2, 3, 4])
-    pa.add_argument("--clf", nargs="+", default=["xgb", "tabpfn"])
-    pa.add_argument("--heads", nargs="+", default=["linear", "weak", "strong"],
-                    choices=["linear", "weak", "strong"])
+    pa.add_argument("--clf", nargs="+", default=["xgb", "cat"])
+    pa.add_argument("--heads", nargs="+", default=["weak", "gated"],
+                    choices=["linear", "weak", "strong", "gated"])
     pa.add_argument("--epochs", type=int, default=20)
     pa.add_argument("--seed", type=int, default=27)
     args = pa.parse_args()
@@ -188,7 +212,7 @@ def main():
             am, asd = ms(dZ[c][h], 0); cm, csd = ms(dZ[c][h], 1)
             fa = "OK" if abs(am) > asd else "noise"
             print(f"{h:<8} | {am:+.4f} ± {asd:.4f} [{fa:>5}] | {cm:+.4f} ± {csd:.4f}")
-        print("  hypothesis holds if linear >= weak > strong.")
+        print("  higher dZ = z transfers better to this classifier.")
 
 
 if __name__ == "__main__":
