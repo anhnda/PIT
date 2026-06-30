@@ -187,6 +187,7 @@ def main():
 
     d_pre = {"aupr": [], "auc": []}
     d_rl = {"aupr": [], "auc": []}
+    d_scratch = {"aupr": [], "auc": []}
 
     for fi in args.folds:
         train_full, _ = all_folds[fi]
@@ -211,22 +212,38 @@ def main():
         a1b, c1b = oof_eval(b2, Y2, ["S", "L", "Z"], args.clf, seed=args.seed)
         d_rl["aupr"].append(a1b - a0b); d_rl["auc"].append(c1b - c0b)
 
-        print(f"fold {fi}: pretrain dZ AUPR {a1-a0:+.4f} AUC {c1-c0:+.4f} | "
-              f"+RL dZ AUPR {a1b-a0b:+.4f} AUC {c1b-c0b:+.4f}", flush=True)
+        # 3) RL FROM SCRATCH: pooled encoder, random init, no pretrain.
+        #    Tests whether RL can reach a good z on its own (exploring from a
+        #    bad start = what RL is supposed to be good at), rather than being
+        #    asked to fine-tune an already-near-optimal pretrained encoder.
+        net_s = make_net(len(feats)).to(DEVICE)
+        net_s = rl_finetune(net_s, tp, feats, enc, stats, args.clf,
+                            args.rl_epochs + args.pretrain_epochs)  # match total budget
+        b3, Y3 = blocks_for_eval(net_s, tp, feats, enc, stats)
+        a0s, c0s = oof_eval(b3, Y3, ["S", "L"], args.clf, seed=args.seed)
+        a1s, c1s = oof_eval(b3, Y3, ["S", "L", "Z"], args.clf, seed=args.seed)
+        d_scratch["aupr"].append(a1s - a0s); d_scratch["auc"].append(c1s - c0s)
+
+        print(f"fold {fi}: pretrain {a1-a0:+.4f} | +RL {a1b-a0b:+.4f} | "
+              f"RL-scratch {a1s-a0s:+.4f}  (dZ AUPR)", flush=True)
 
     def ms(x): a = np.array(x); return a.mean(), a.std()
     print(f"\n=== Z-over-(S+L), clf={args.clf}, {len(args.folds)} folds ===")
-    for tag, d in [("pooled+supervised", d_pre), ("pooled+supervised+RL", d_rl)]:
+    for tag, d in [("pooled+supervised", d_pre),
+                   ("pooled+supervised+RL", d_rl),
+                   ("pooled+RL-from-scratch", d_scratch)]:
         am, asd = ms(d["aupr"]); cm, csd = ms(d["auc"])
         fa = "OK" if abs(am) > asd else "noise"
         fc = "OK" if abs(cm) > csd else "noise"
-        print(f"  {tag:22s} | AUPR {am:+.4f}±{asd:.4f}[{fa}] | AUC {cm:+.4f}±{csd:.4f}[{fc}]")
+        print(f"  {tag:24s} | AUPR {am:+.4f}±{asd:.4f}[{fa:>5}] | AUC {cm:+.4f}±{csd:.4f}[{fc:>5}]")
     da = np.array(d_rl["aupr"]) - np.array(d_pre["aupr"])
-    dc = np.array(d_rl["auc"]) - np.array(d_pre["auc"])
-    print(f"\n  RL contribution beyond pretrain: "
-          f"AUPR {da.mean():+.4f}±{da.std():.4f}[{'OK' if abs(da.mean())>da.std() else 'noise'}] "
-          f"AUC {dc.mean():+.4f}±{dc.std():.4f}[{'OK' if abs(dc.mean())>dc.std() else 'noise'}]")
-    print("  If this is ~0/noise, the pooling encoder is the contribution, not RL.")
+    print(f"\n  RL fine-tune vs pretrain: AUPR {da.mean():+.4f}±{da.std():.4f}"
+          f"[{'OK' if abs(da.mean())>da.std() else 'noise'}]")
+    ds = np.array(d_scratch["aupr"]) - np.array(d_pre["aupr"])
+    print(f"  RL-from-scratch vs pretrain: AUPR {ds.mean():+.4f}±{ds.std():.4f}"
+          f"[{'OK' if abs(ds.mean())>ds.std() else 'noise'}]")
+    print("  RL is worth keeping only if from-scratch >= pretrain. If it's well")
+    print("  below, RL cannot even match supervised pretrain on this task.")
 
 
 if __name__ == "__main__":
