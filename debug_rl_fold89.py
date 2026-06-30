@@ -234,14 +234,14 @@ def rl_finetune_logged(net, tr_p, te_p, feats, enc, stats, reward_clf, eval_clf,
 
 
 # ---------------------------------------------------------------- analysis
-def analyse(fold, log):
+def analyse(fold, log, tag="on-pretrain"):
     eps   = np.array([r["epoch"]       for r in log])
     te_ap = np.array([r["test_dAUPR"]  for r in log])
     te_au = np.array([r["test_dAUC"]   for r in log])
     tr_ap = np.array([r["train_dAUPR"] for r in log])
     tr_au = np.array([r["train_dAUC"]  for r in log])
 
-    base_ap, base_au = te_ap[0], te_au[0]          # pretrain-only dZ on test
+    base_ap, base_au = te_ap[0], te_au[0]          # epoch-0 dZ on test
     oracle_i = int(np.argmax(te_ap))               # best test epoch (not usable)
     proxy_i  = int(np.argmax(tr_ap))               # best train-proxy epoch (usable)
     final_i  = len(log) - 1
@@ -251,8 +251,9 @@ def analyse(fold, log):
             return float("nan")
         return float(np.corrcoef(a, b)[0, 1])
 
-    print(f"\n================  FOLD {fold}  ================")
-    print(f"  pretrain-only (epoch 0) test dZ : AUPR {base_ap:+.4f} | AUC {base_au:+.4f}")
+    print(f"\n================  FOLD {fold}  [{tag}]  ================")
+    print(f"  epoch-0 test dZ : AUPR {base_ap:+.4f} | AUC {base_au:+.4f}"
+          f"   ({'pretrained start' if tag=='on-pretrain' else 'random-init start'})")
     print(f"  ---- per-epoch trajectory ----")
     print(f"  {'ep':>3} | {'train_dAUPR':>11} {'train_dAUC':>10} | "
           f"{'test_dAUPR':>10} {'test_dAUC':>9} | {'drift':>6} | "
@@ -272,7 +273,7 @@ def analyse(fold, log):
           f"({'helps' if te_ap[proxy_i] > te_ap[final_i] else 'no gain'})")
     print(f"  --> test dZ at stop      : {te_ap[proxy_i]:+.4f} "
           f"(<0 means still below the S+L baseline, just less so)")
-    return dict(fold=fold, base_ap=base_ap, oracle=te_ap[oracle_i],
+    return dict(fold=fold, tag=tag, base_ap=base_ap, oracle=te_ap[oracle_i],
                 proxy=te_ap[proxy_i], final=te_ap[final_i],
                 corr_ap=corr(tr_ap, te_ap), corr_au=corr(tr_au, te_au))
 
@@ -288,6 +289,8 @@ def main():
     pa.add_argument("--rl_epochs", type=int, default=60)
     pa.add_argument("--eval_every", type=int, default=2)
     pa.add_argument("--seed", type=int, default=27)
+    pa.add_argument("--no_scratch", action="store_true",
+                    help="skip the RL-from-scratch branch")
     args = pa.parse_args()
 
     patients = load_and_prepare_patients()
@@ -313,21 +316,46 @@ def main():
         log = rl_finetune_logged(net, tp, test_p.patientList, feats, enc, stats,
                                  reward_clf=args.clf, eval_clf=args.clf,
                                  epochs=args.rl_epochs, eval_every=args.eval_every)
-        summ.append(analyse(fi, log))
+        summ.append(analyse(fi, log, tag="on-pretrain"))
+
+        # ---- scratch branch: random init, RL only, matched budget (= diag_rl) ----
+        if not args.no_scratch:
+            torch.manual_seed(0); np.random.seed(0)
+            net_s = make_net(args.encoder, len(feats)).to(DEVICE)
+            log_s = rl_finetune_logged(
+                net_s, tp, test_p.patientList, feats, enc, stats,
+                reward_clf=args.clf, eval_clf=args.clf,
+                epochs=args.rl_epochs + args.pretrain_epochs,
+                eval_every=args.eval_every)
+            summ.append(analyse(fi, log_s, tag="scratch"))
 
     print("\n\n================  CROSS-FOLD SUMMARY  ================")
-    print(f"  {'fold':>4} | {'base(S+L+Z pre)':>15} | {'oracle':>8} {'proxy-stop':>10} "
-          f"{'full':>8} | {'corr_AUPR':>9} {'corr_AUC':>8}")
+    print(f"  {'fold':>4} {'branch':>12} | {'epoch0 dZ':>10} | {'oracle':>8} "
+          f"{'proxy-stop':>10} {'full':>8} | {'corr_AUPR':>9} {'corr_AUC':>8}")
     for s in summ:
-        print(f"  {s['fold']:>4} | {s['base_ap']:>+15.4f} | {s['oracle']:>+8.4f} "
-              f"{s['proxy']:>+10.4f} {s['final']:>+8.4f} | "
+        print(f"  {s['fold']:>4} {s['tag']:>12} | {s['base_ap']:>+10.4f} | "
+              f"{s['oracle']:>+8.4f} {s['proxy']:>+10.4f} {s['final']:>+8.4f} | "
               f"{s['corr_ap']:>+9.3f} {s['corr_au']:>+8.3f}")
+
+    # pre-vs-scratch head-to-head per fold (final-epoch test dZ-AUPR)
+    print("\n  pre vs scratch (final-epoch test dZ-AUPR):")
+    byfold = {}
+    for s in summ:
+        byfold.setdefault(s['fold'], {})[s['tag']] = s
+    for f, d in byfold.items():
+        if 'on-pretrain' in d and 'scratch' in d:
+            p, sc = d['on-pretrain']['final'], d['scratch']['final']
+            print(f"    fold {f}: on-pretrain {p:+.4f} | scratch {sc:+.4f} | "
+                  f"scratch-minus-pre {sc-p:+.4f} "
+                  f"({'scratch better' if sc > p else 'pre better'})")
+
     print("\n  Read:")
-    print("  * corr_AUPR > 0 and large  -> train OOF dZ tracks test dZ; early-stop")
-    print("    on the train proxy is a valid honest brake for bad folds.")
-    print("  * proxy-stop >= full on the bad fold (8) -> stopping caps the damage.")
-    print("  * if reward_mean keeps climbing while test_dAUPR falls (see fold 8")
-    print("    trajectory), RL is over-optimising a saturating reward, not learning.")
+    print("  * epoch0 dZ for 'on-pretrain' = damage already baked in by pretrain")
+    print("    BEFORE any RL step. For 'scratch' it is a random encoder (~0).")
+    print("  * if scratch climbs above the on-pretrain plateau on fold 8, the")
+    print("    pretrain init -- not RL -- is what holds that fold underwater.")
+    print("  * corr_AUPR small/unstable -> train-OOF proxy is NOT a reliable")
+    print("    early-stop signal (matches what fold 8/9 showed).")
 
 
 if __name__ == "__main__":
