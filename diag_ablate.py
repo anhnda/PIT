@@ -116,7 +116,8 @@ def oof_eval(blocks, Y, spec, clf_name, K, seed=0):
 
 def main():
     pa = argparse.ArgumentParser()
-    pa.add_argument("--fold", type=int, default=0)
+    pa.add_argument("--folds", type=int, nargs="+", default=[0, 1, 2, 3, 4],
+                    help="which outer folds to run (default all 5)")
     pa.add_argument("--cv", type=int, default=5)
     pa.add_argument("--pretrain_epochs", type=int, default=20)
     pa.add_argument("--seed", type=int, default=27)
@@ -131,56 +132,68 @@ def main():
     temporal_feats = get_all_temporal_features(patients)
     encoder = SimpleStaticEncoder(FIXED_FEATURES)
     encoder.fit(patients.patientList)
-
-    folds = list(trainTestPatients(patients, seed=args.seed))
-    train_full, _ = folds[args.fold]
-    train_p_obj, _ = split_patients_train_val(train_full, val_ratio=0.1, seed=42 + args.fold)
-    train_patients = train_p_obj.patientList
+    all_folds = list(trainTestPatients(patients, seed=args.seed))
 
     def make_net():
         Net = RNNPolicyNetwork if args.encoder == "final" else PooledRNNPolicyNetwork
         return Net(input_dim=len(temporal_feats),
                    hidden_dim=20, latent_dim=28, time_dim=32)
 
-    print(f"[encoder = {args.encoder}]")
-
-    stats = HybridDataset(train_patients, temporal_feats, encoder).get_normalization_stats()
-    print(f"Pretraining encoder ({args.pretrain_epochs} ep) on {len(train_patients)} patients...")
-    net = pretrain_encoder(make_net, train_patients, temporal_feats, encoder, stats,
-                           args.pretrain_epochs)
-    blocks, Y = extract_blocks(net, train_patients, temporal_feats, encoder, stats)
-    print(f"Blocks: S={blocks['S'].shape[1]} L={blocks['L'].shape[1]} "
-          f"MS={blocks['MS'].shape[1]} Z={blocks['Z'].shape[1]} "
-          f"| n={len(Y)} pos={int(Y.sum())} ({Y.mean():.1%})")
-
     configs = [
         ("S", ["S"]), ("S+L", ["S", "L"]), ("S+L+MS", ["S", "L", "MS"]),
         ("S+L+Z", ["S", "L", "Z"]), ("S+L+MS+Z", ["S", "L", "MS", "Z"]),
         ("Z", ["Z"]), ("S+Z", ["S", "Z"]),
     ]
+    deltas = [
+        ("Z over last+static  (S+L+Z)-(S+L)",     "S+L+Z",    "S+L"),
+        ("Z beyond hand-stats (S+L+MS+Z)-(S+L+MS)", "S+L+MS+Z", "S+L+MS"),
+        ("learned-temporal vs last  Z-(S+L)",     "Z",        "S+L"),
+        ("can Z replace last  (S+Z)-(S+L)",       "S+Z",      "S+L"),
+        ("hand-stats value   (S+L+MS)-(S+L)",     "S+L+MS",   "S+L"),
+    ]
+
+    print(f"[encoder = {args.encoder}] folds={args.folds} cv={args.cv}\n")
+
+    # results[clf][config] = list of (aupr, auc) across folds
+    results = {c: {name: [] for name, _ in configs} for c in args.clf}
+
+    for fi in args.folds:
+        train_full, _ = all_folds[fi]
+        train_p_obj, _ = split_patients_train_val(
+            train_full, val_ratio=0.1, seed=42 + fi)
+        train_patients = train_p_obj.patientList
+        stats = HybridDataset(train_patients, temporal_feats, encoder).get_normalization_stats()
+        net = pretrain_encoder(make_net, train_patients, temporal_feats, encoder,
+                               stats, args.pretrain_epochs)
+        blocks, Y = extract_blocks(net, train_patients, temporal_feats, encoder, stats)
+        print(f"fold {fi}: n={len(Y)} pos={int(Y.sum())} ({Y.mean():.1%})", flush=True)
+        for clf_name in args.clf:
+            for name, spec in configs:
+                aupr, auc = oof_eval(blocks, Y, spec, clf_name, args.cv, seed=args.seed)
+                results[clf_name][name].append((aupr, auc))
+
+    def ms(vals, i):
+        a = np.array([v[i] for v in vals])
+        return a.mean(), a.std()
 
     for clf_name in args.clf:
-        print(f"\n================  classifier = {clf_name.upper()}  "
-              f"(OOF {args.cv}-fold)  ================")
-        print(f"{'config':<12} | {'OOF_AUPR':>8} | {'OOF_AUC':>7}")
-        print("-" * 34)
-        res = {}
-        for name, spec in configs:
-            aupr, auc = oof_eval(blocks, Y, spec, clf_name, args.cv, seed=args.seed)
-            res[name] = (aupr, auc)
-            print(f"{name:<12} | {aupr:8.4f} | {auc:7.4f}")
-        d = lambda a, b, i: res[a][i] - res[b][i]
-        print(f"  deltas:")
-        print(f"   Z over last+static  (S+L+Z)-(S+L)     : "
-              f"AUPR {d('S+L+Z','S+L',0):+.4f}  AUC {d('S+L+Z','S+L',1):+.4f}")
-        print(f"   Z beyond hand-stats (S+L+MS+Z)-(S+L+MS): "
-              f"AUPR {d('S+L+MS+Z','S+L+MS',0):+.4f}  AUC {d('S+L+MS+Z','S+L+MS',1):+.4f}")
-        print(f"   learned-temporal vs last  Z-(S+L)     : "
-              f"AUPR {d('Z','S+L',0):+.4f}  AUC {d('Z','S+L',1):+.4f}")
-        print(f"   can Z replace last  (S+Z)-(S+L)       : "
-              f"AUPR {d('S+Z','S+L',0):+.4f}  AUC {d('S+Z','S+L',1):+.4f}")
-        print(f"   hand-stats value   (S+L+MS)-(S+L)     : "
-              f"AUPR {d('S+L+MS','S+L',0):+.4f}  AUC {d('S+L+MS','S+L',1):+.4f}")
+        R = results[clf_name]
+        print(f"\n================  {clf_name.upper()}  "
+              f"mean±std over {len(args.folds)} folds  ================")
+        print(f"{'config':<12} | {'AUPR mean±std':>17} | {'AUC mean±std':>17}")
+        print("-" * 54)
+        for name, _ in configs:
+            am, asd = ms(R[name], 0); cm, csd = ms(R[name], 1)
+            print(f"{name:<12} | {am:.4f} ± {asd:.4f}  | {cm:.4f} ± {csd:.4f}")
+        print("  deltas (mean±std; >0 and |mean|>std means it survives fold noise):")
+        for label, a, b in deltas:
+            da = np.array([x[0] for x in R[a]]) - np.array([x[0] for x in R[b]])
+            dc = np.array([x[1] for x in R[a]]) - np.array([x[1] for x in R[b]])
+            flag_a = "OK" if abs(da.mean()) > da.std() else "noise"
+            flag_c = "OK" if abs(dc.mean()) > dc.std() else "noise"
+            print(f"   {label:<40}: "
+                  f"AUPR {da.mean():+.4f}±{da.std():.4f}[{flag_a}]  "
+                  f"AUC {dc.mean():+.4f}±{dc.std():.4f}[{flag_c}]")
 
 
 if __name__ == "__main__":
