@@ -1,36 +1,49 @@
 """
-Does RL fine-tuning add anything ON TOP of the pretrained pooled encoder?
+Does RL (REINFORCE) earn its place, evaluated HONESTLY on held-out test?
 
-Compares, with identical OOF-CV evaluation (TabPFN/XGB/CatBoost), per fold:
-   pooled + supervised-pretrain        (the z we already measured)
-   pooled + supervised-pretrain + RL   (REINFORCE fine-tune)
+Leak-free counterpart of the earlier diag_rl. Every encoder (supervised-
+pretrained, +RL fine-tuned, RL-from-scratch) is trained ONLY on the fold's
+train partition; a val split carved from train selects the supervised
+checkpoint; z for the TEST patients comes from an encoder that never saw them.
+A classifier is fit on train-[features] and scored on the held-out TEST. This
+matches diag_test.py exactly.
 
-The RL loop here fixes the three issues that made the original RL inert:
-  1. OUT-OF-FOLD reward: reward for each train patient comes from a classifier
-     fit on OTHER train patients (StratifiedKFold inside train), not from
-     predict_proba on the same in-context set (which saturates -> zero-signal
-     reward -> flat val). This is internal cross-fitting; outer val/test are
-     untouched.
-  2. Proper entropy bonus (+H, encourages exploration) instead of the original
-     `- 0.001*log_prob` which pushed the policy to collapse.
-  3. No hard temperature floor; std is governed by the entropy term.
-  Reward is per-sample train quality only (no val_aupr leak).
+It replaces the previous version, which did OOF *inside train* (encoder
+pretrained on all of train, then z measured via inner CV on the same patients):
+the label leaked through the encoder and the test set was never touched. Those
+numbers were optimistic.
 
-We measure z BEFORE and AFTER RL via the same delta the ablation used:
-   Z over last+static = (S+L+Z) - (S+L), OOF, mean±std over folds.
-If RL's delta > supervised delta and survives fold noise, RL earns its place.
-If not, the contribution is the pooling encoder, not the policy gradient.
+Three encoders, identical protocol, per fold:
+   <enc> + supervised-pretrain            baseline z (what diag_test measured)
+   <enc> + supervised-pretrain + RL       REINFORCE fine-tune on top
+   <enc> + RL-from-scratch                random init, RL only, matched budget
 
-Run:  python diag_rl.py --clf xgb --folds 0 1 2 3 4 --rl_epochs 40
+RL loop fixes that keep REINFORCE from being inert:
+  1. OUT-OF-FOLD reward: each train patient's reward = prob the true class gets
+     from a classifier fit on OTHER train patients (inner StratifiedKFold).
+     Avoids predict_proba-on-self saturation. Outer val/test untouched.
+  2. Real Gaussian entropy bonus (+H) instead of the original -0.001*log_prob
+     that collapsed the policy.
+  3. No hard temperature floor; std governed by the entropy term.
+
+Reports per encoder: dZ = (S+L+Z)-(S+L) on held-out TEST (AUPR and AUC),
+mean+-std over folds; a paired test (paired-t + Wilcoxon + Cohen dz) of S+L+Z
+vs S+L; and paired tests of (+RL) vs (supervised) and (RL-scratch) vs
+(supervised). RL is worth keeping only if its dZ beats supervised pretrain AND
+survives fold noise. If RL-from-scratch is well below supervised, RL cannot
+even match a plain BCE encoder on this task.
+
+Run:  python diag_rl.py --clf tabpfn --encoder final --kfold 10 --rl_epochs 40
 """
 import argparse, copy, numpy as np, torch, torch.nn as nn
 from torch.utils.data import DataLoader
 from sklearn.metrics import average_precision_score, roc_auc_score
 from sklearn.model_selection import StratifiedKFold
+from scipy import stats as sp_stats
 
 from TabPFNRL import (
-    FIXED_FEATURES, SupervisedHead, HybridDataset, hybrid_collate_fn,
-    SimpleStaticEncoder,
+    FIXED_FEATURES, SupervisedHead, RNNPolicyNetwork, HybridDataset,
+    hybrid_collate_fn, SimpleStaticEncoder,
 )
 from pooled_encoder import PooledRNNPolicyNetwork
 from TimeEmbedding import DEVICE
@@ -58,15 +71,17 @@ def make_clf(name, ratio):
     raise ValueError(name)
 
 
-def make_net(n_feat):
-    return PooledRNNPolicyNetwork(input_dim=n_feat, hidden_dim=20,
-                                  latent_dim=28, time_dim=32)
+def make_net(enc_kind, n_feat):
+    Net = PooledRNNPolicyNetwork if enc_kind == "pool" else RNNPolicyNetwork
+    return Net(input_dim=n_feat, hidden_dim=20, latent_dim=28, time_dim=32)
 
 
-def supervised_pretrain(net, loader, epochs, lr=1e-3):
+# ---------- supervised pretrain (train-only, val checkpoint) ----------
+def supervised_pretrain(net, loader, val_loader, epochs, lr=1e-3):
     head = SupervisedHead(net.latent_dim + len(FIXED_FEATURES)).to(DEVICE)
     opt = torch.optim.Adam(list(net.parameters()) + list(head.parameters()), lr=lr)
     crit = nn.BCELoss()
+    best_aupr, best_state = -1, None
     for _ in range(epochs):
         net.train(); head.train()
         for t, lbl, s in loader:
@@ -78,24 +93,25 @@ def supervised_pretrain(net, loader, epochs, lr=1e-3):
             torch.nn.utils.clip_grad_norm_(
                 list(net.parameters()) + list(head.parameters()), 1.0)
             opt.step()
+        net.eval(); head.eval()
+        ps, ys = [], []
+        with torch.no_grad():
+            for t, lbl, s in val_loader:
+                s = s.to(DEVICE); z, _, _ = net(t, deterministic=True)
+                p = head(torch.cat([z, s], dim=1)).squeeze(-1)
+                ps.extend(p.cpu().numpy()); ys.extend(lbl.numpy())
+        au = average_precision_score(ys, ps) if len(set(ys)) > 1 else 0
+        if au > best_aupr:
+            best_aupr = au; best_state = copy.deepcopy(net.state_dict())
+    if best_state is not None:
+        net.load_state_dict(best_state)
     net.eval(); return net
 
 
-def collect_z_static_label(net, patients, feats, enc, stats, sample=False, temp=1.0):
-    ds = HybridDataset(patients, feats, enc, stats)
-    ld = DataLoader(ds, batch_size=32, shuffle=False, collate_fn=hybrid_collate_fn)
-    Z, S, Y, LP = [], [], [], []
-    for t, lbl, s in ld:
-        z, logp, mean = net(t, deterministic=not sample, temperature=temp)
-        Z.append((z if sample else mean).detach().cpu().numpy())
-        S.append(s.numpy()); Y.extend(lbl.numpy())
-        LP.append(logp.detach().cpu().numpy() if (sample and logp is not None) else None)
-    return np.vstack(Z), np.vstack(S), np.array(Y)
-
-
+# ---------- RL fine-tune (out-of-fold reward, train-only) ----------
 def oof_reward(Xz_static, Y, clf_name, K=5, seed=0):
-    """Out-of-fold per-sample reward: prob assigned to the TRUE class by a
-    classifier that did NOT see this sample (fit on other inner folds)."""
+    """Per-sample reward = prob the TRUE class gets from a classifier that did
+    NOT see this sample (inner StratifiedKFold over TRAIN only)."""
     ratio = float((Y == 0).sum()) / max(int((Y == 1).sum()), 1)
     skf = StratifiedKFold(n_splits=K, shuffle=True, random_state=seed)
     proba = np.full(len(Y), np.nan)
@@ -103,35 +119,28 @@ def oof_reward(Xz_static, Y, clf_name, K=5, seed=0):
         clf = make_clf(clf_name, ratio)
         clf.fit(Xz_static[tr], Y[tr])
         proba[va] = clf.predict_proba(Xz_static[va])[:, 1]
-    reward = np.where(Y == 1, proba, 1.0 - proba)
-    return reward
+    return np.where(Y == 1, proba, 1.0 - proba)
 
 
-def rl_finetune(net, patients, feats, enc, stats, clf_name, epochs, lr=3e-4,
-                ent_coef=0.01):
-    """REINFORCE fine-tune with out-of-fold reward and a proper entropy bonus."""
+def rl_finetune(net, patients, feats, enc, stats, clf_name, epochs,
+                lr=3e-4, ent_coef=0.01):
+    """REINFORCE fine-tune with out-of-fold reward + entropy bonus. Train-only:
+    reward classifiers fit on inner folds of TRAIN; test never enters. Final
+    encoder state is returned (RL has no separate head to overfit)."""
     ds = HybridDataset(patients, feats, enc, stats)
     ld = DataLoader(ds, batch_size=len(patients), shuffle=False,
-                    collate_fn=hybrid_collate_fn)  # full-batch for simple REINFORCE
+                    collate_fn=hybrid_collate_fn)  # full-batch REINFORCE
     opt = torch.optim.Adam(net.parameters(), lr=lr)
-    # static + label are fixed; precompute static per patient via one pass
-    for epoch in range(epochs):
+    for _ in range(epochs):
         net.train()
         for t, lbl, s in ld:
             s = s.to(DEVICE)
-            # sample z, get log_prob and the gaussian entropy
             z, logp, mean = net(t, deterministic=False, temperature=1.0)
-            # build [static || z] for the reward model (last/MS handled outside;
-            # here reward is on static+z which is enough to shape z)
             Xz = torch.cat([s, z], dim=1).detach().cpu().numpy()
             Y = lbl.numpy().astype(int)
-            reward = oof_reward(Xz, Y, clf_name)          # out-of-fold, real signal
+            reward = oof_reward(Xz, Y, clf_name)
             R = torch.tensor(reward, dtype=torch.float32, device=DEVICE)
             R = (R - R.mean()) / (R.std() + 1e-8)
-            # gaussian entropy of the diagonal policy (encourage exploration)
-            # entropy of N(mu, sigma) = 0.5*log(2*pi*e*sigma^2) summed over dims
-            # recover sigma from logp is awkward; instead recompute via net stats:
-            # use a small proxy: penalize collapse by maximizing sample spread
             policy_loss = -(logp * R).mean()
             ent = 0.5 * torch.log(2 * np.pi * np.e * (z.var(dim=0) + 1e-6)).sum()
             loss = policy_loss - ent_coef * ent
@@ -141,6 +150,7 @@ def rl_finetune(net, patients, feats, enc, stats, clf_name, epochs, lr=3e-4,
     net.eval(); return net
 
 
+# ---------- blocks: S, L (last-observed), Z, on any patient set ----------
 def blocks_for_eval(net, patients, feats, enc, stats):
     ds = HybridDataset(patients, feats, enc, stats)
     ld = DataLoader(ds, batch_size=32, shuffle=False, collate_fn=hybrid_collate_fn)
@@ -160,90 +170,134 @@ def blocks_for_eval(net, patients, feats, enc, stats):
     return {"S": np.vstack(S), "L": np.array(L), "Z": np.vstack(Z)}, np.array(Y)
 
 
-def oof_eval(blocks, Y, spec, clf_name, K=5, seed=0):
-    X = np.hstack([blocks[b] for b in spec])
-    ratio = float((Y == 0).sum()) / max(int((Y == 1).sum()), 1)
-    skf = StratifiedKFold(n_splits=K, shuffle=True, random_state=seed)
-    oof = np.full(len(Y), np.nan)
-    for tr, va in skf.split(X, Y):
-        clf = make_clf(clf_name, ratio)
-        clf.fit(X[tr], Y[tr]); oof[va] = clf.predict_proba(X[va])[:, 1]
-    return average_precision_score(Y, oof), roc_auc_score(Y, oof)
+def fit_score(tr_b, tr_Y, te_b, te_Y, spec, clf_name):
+    """Fit on TRAIN blocks, score on held-out TEST blocks."""
+    Xtr = np.hstack([tr_b[k] for k in spec]); Xte = np.hstack([te_b[k] for k in spec])
+    ratio = float((tr_Y == 0).sum()) / max(int((tr_Y == 1).sum()), 1)
+    c = make_clf(clf_name, ratio); c.fit(Xtr, tr_Y)
+    p = c.predict_proba(Xte)[:, 1]
+    return average_precision_score(te_Y, p), roc_auc_score(te_Y, p)
+
+
+def dZ_on_test(net, train_p, test_p, feats, enc, stats, clf):
+    """dZ = (S+L+Z) - (S+L) on held-out test; returns (dZ, full, base) for
+    both AUPR and AUC."""
+    tr_b, tr_Y = blocks_for_eval(net, train_p, feats, enc, stats)
+    te_b, te_Y = blocks_for_eval(net, test_p, feats, enc, stats)
+    a0, c0 = fit_score(tr_b, tr_Y, te_b, te_Y, ["S", "L"], clf)
+    a1, c1 = fit_score(tr_b, tr_Y, te_b, te_Y, ["S", "L", "Z"], clf)
+    return (a1 - a0, c1 - c0), (a1, c1), (a0, c0)
+
+
+def paired_report(name, a, b):
+    a = np.array(a); b = np.array(b); d = a - b; n = len(d)
+    t_stat, t_p = sp_stats.ttest_rel(a, b)
+    try:
+        w_stat, w_p = sp_stats.wilcoxon(a, b); w_str = f"W={w_stat:.1f}, p={w_p:.4f}"
+    except ValueError as e:
+        w_str = f"n/a ({e})"
+    dz = d.mean() / (d.std(ddof=1) + 1e-12)
+    wins = int((d > 0).sum())
+    print(f"    {name:36s} mean={d.mean():+.4f} wins {wins}/{n} | "
+          f"paired-t t={t_stat:+.3f} p={t_p:.4f} | Wilcoxon {w_str} | dz={dz:+.2f}")
 
 
 def main():
     pa = argparse.ArgumentParser()
-    pa.add_argument("--folds", type=int, nargs="+", default=[0, 1, 2, 3, 4])
-    pa.add_argument("--clf", default="xgb", choices=["xgb", "cat", "tabpfn"])
+    pa.add_argument("--kfold", type=int, default=10, help="number of outer CV folds")
+    pa.add_argument("--folds", type=int, nargs="+", default=None,
+                    help="which fold indices to run (default: all 0..kfold-1)")
+    pa.add_argument("--clf", default="tabpfn", choices=["xgb", "cat", "tabpfn"])
+    pa.add_argument("--encoder", default="final", choices=["final", "pool"])
     pa.add_argument("--pretrain_epochs", type=int, default=20)
     pa.add_argument("--rl_epochs", type=int, default=40)
     pa.add_argument("--seed", type=int, default=27)
     args = pa.parse_args()
+    if args.folds is None:
+        args.folds = list(range(args.kfold))
 
     patients = load_and_prepare_patients()
     feats = get_all_temporal_features(patients)
     enc = SimpleStaticEncoder(FIXED_FEATURES); enc.fit(patients.patientList)
-    all_folds = list(trainTestPatients(patients, seed=args.seed))
+    all_folds = list(trainTestPatients(patients, k=args.kfold, seed=args.seed))
 
-    d_pre = {"aupr": [], "auc": []}
-    d_rl = {"aupr": [], "auc": []}
-    d_scratch = {"aupr": [], "auc": []}
+    rec = {k: {"aupr": [], "auc": [], "full_ap": [], "full_au": [],
+               "base_ap": [], "base_au": []}
+           for k in ["pre", "rl", "scratch"]}
 
     for fi in args.folds:
-        train_full, _ = all_folds[fi]
-        tr_obj, _ = split_patients_train_val(train_full, val_ratio=0.1, seed=42 + fi)
+        train_full, test_p = all_folds[fi]
+        tr_obj, val_obj = split_patients_train_val(train_full, val_ratio=0.1, seed=42 + fi)
         tp = tr_obj.patientList
         stats = HybridDataset(tp, feats, enc).get_normalization_stats()
-        loader = DataLoader(HybridDataset(tp, feats, enc, stats), batch_size=32,
-                            shuffle=True, collate_fn=hybrid_collate_fn)
+        tr_loader = DataLoader(HybridDataset(tp, feats, enc, stats), batch_size=32,
+                               shuffle=True, collate_fn=hybrid_collate_fn)
+        val_loader = DataLoader(HybridDataset(val_obj.patientList, feats, enc, stats),
+                                batch_size=32, shuffle=False, collate_fn=hybrid_collate_fn)
 
-        # 1) pooled + supervised
-        net = make_net(len(feats)).to(DEVICE)
-        net = supervised_pretrain(net, loader, args.pretrain_epochs)
-        b, Y = blocks_for_eval(net, tp, feats, enc, stats)
-        a0, c0 = oof_eval(b, Y, ["S", "L"], args.clf, seed=args.seed)
-        a1, c1 = oof_eval(b, Y, ["S", "L", "Z"], args.clf, seed=args.seed)
-        d_pre["aupr"].append(a1 - a0); d_pre["auc"].append(c1 - c0)
+        def store(key, dZ, full, base):
+            rec[key]["aupr"].append(dZ[0]); rec[key]["auc"].append(dZ[1])
+            rec[key]["full_ap"].append(full[0]); rec[key]["full_au"].append(full[1])
+            rec[key]["base_ap"].append(base[0]); rec[key]["base_au"].append(base[1])
 
-        # 2) + RL fine-tune (continue from the same pretrained net)
+        # 1) supervised pretrain (train-only, val checkpoint)
+        torch.manual_seed(0); np.random.seed(0)
+        net = make_net(args.encoder, len(feats)).to(DEVICE)
+        net = supervised_pretrain(net, tr_loader, val_loader, args.pretrain_epochs)
+        dZ, full, base = dZ_on_test(net, tp, test_p.patientList, feats, enc, stats, args.clf)
+        store("pre", dZ, full, base)
+
+        # 2) + RL fine-tune (continue from same pretrained encoder; train-only)
         net = rl_finetune(net, tp, feats, enc, stats, args.clf, args.rl_epochs)
-        b2, Y2 = blocks_for_eval(net, tp, feats, enc, stats)
-        a0b, c0b = oof_eval(b2, Y2, ["S", "L"], args.clf, seed=args.seed)
-        a1b, c1b = oof_eval(b2, Y2, ["S", "L", "Z"], args.clf, seed=args.seed)
-        d_rl["aupr"].append(a1b - a0b); d_rl["auc"].append(c1b - c0b)
+        dZ2, full2, base2 = dZ_on_test(net, tp, test_p.patientList, feats, enc, stats, args.clf)
+        store("rl", dZ2, full2, base2)
 
-        # 3) RL FROM SCRATCH: pooled encoder, random init, no pretrain.
-        #    Tests whether RL can reach a good z on its own (exploring from a
-        #    bad start = what RL is supposed to be good at), rather than being
-        #    asked to fine-tune an already-near-optimal pretrained encoder.
-        net_s = make_net(len(feats)).to(DEVICE)
+        # 3) RL from scratch (random init, RL only, matched total budget)
+        torch.manual_seed(0); np.random.seed(0)
+        net_s = make_net(args.encoder, len(feats)).to(DEVICE)
         net_s = rl_finetune(net_s, tp, feats, enc, stats, args.clf,
-                            args.rl_epochs + args.pretrain_epochs)  # match total budget
-        b3, Y3 = blocks_for_eval(net_s, tp, feats, enc, stats)
-        a0s, c0s = oof_eval(b3, Y3, ["S", "L"], args.clf, seed=args.seed)
-        a1s, c1s = oof_eval(b3, Y3, ["S", "L", "Z"], args.clf, seed=args.seed)
-        d_scratch["aupr"].append(a1s - a0s); d_scratch["auc"].append(c1s - c0s)
+                            args.rl_epochs + args.pretrain_epochs)
+        dZ3, full3, base3 = dZ_on_test(net_s, tp, test_p.patientList, feats, enc, stats, args.clf)
+        store("scratch", dZ3, full3, base3)
 
-        print(f"fold {fi}: pretrain {a1-a0:+.4f} | +RL {a1b-a0b:+.4f} | "
-              f"RL-scratch {a1s-a0s:+.4f}  (dZ AUPR)", flush=True)
+        print(f"fold {fi}: dZ-AUPR  pre {dZ[0]:+.4f} | +RL {dZ2[0]:+.4f} | "
+              f"scratch {dZ3[0]:+.4f}   ||   dZ-AUC  pre {dZ[1]:+.4f} | "
+              f"+RL {dZ2[1]:+.4f} | scratch {dZ3[1]:+.4f}", flush=True)
 
     def ms(x): a = np.array(x); return a.mean(), a.std()
-    print(f"\n=== Z-over-(S+L), clf={args.clf}, {len(args.folds)} folds ===")
-    for tag, d in [("pooled+supervised", d_pre),
-                   ("pooled+supervised+RL", d_rl),
-                   ("pooled+RL-from-scratch", d_scratch)]:
-        am, asd = ms(d["aupr"]); cm, csd = ms(d["auc"])
-        fa = "OK" if abs(am) > asd else "noise"
-        fc = "OK" if abs(cm) > csd else "noise"
-        print(f"  {tag:24s} | AUPR {am:+.4f}±{asd:.4f}[{fa:>5}] | AUC {cm:+.4f}±{csd:.4f}[{fc:>5}]")
-    da = np.array(d_rl["aupr"]) - np.array(d_pre["aupr"])
-    print(f"\n  RL fine-tune vs pretrain: AUPR {da.mean():+.4f}±{da.std():.4f}"
-          f"[{'OK' if abs(da.mean())>da.std() else 'noise'}]")
-    ds = np.array(d_scratch["aupr"]) - np.array(d_pre["aupr"])
-    print(f"  RL-from-scratch vs pretrain: AUPR {ds.mean():+.4f}±{ds.std():.4f}"
-          f"[{'OK' if abs(ds.mean())>ds.std() else 'noise'}]")
-    print("  RL is worth keeping only if from-scratch >= pretrain. If it's well")
-    print("  below, RL cannot even match supervised pretrain on this task.")
+    tags = [("pre", "supervised-pretrain"),
+            ("rl", "supervised + RL"),
+            ("scratch", "RL-from-scratch")]
+
+    print(f"\n=== HELD-OUT TEST, clf={args.clf}, encoder={args.encoder}, "
+          f"{len(args.folds)} folds ===")
+
+    print(f"\n  dZ = (S+L+Z) - (S+L), held-out test, mean±std over folds")
+    for key, label in tags:
+        am, asd = ms(rec[key]["aupr"]); cm, csd = ms(rec[key]["auc"])
+        print(f"    {label:24s} | AUPR dZ {am:+.4f}±{asd:.4f} | "
+              f"AUC dZ {cm:+.4f}±{csd:.4f}")
+
+    print(f"\n  absolute (S+L+Z), held-out test, mean±std")
+    for key, label in tags:
+        am, asd = ms(rec[key]["full_ap"]); cm, csd = ms(rec[key]["full_au"])
+        print(f"    {label:24s} | AUPR {am:.4f}±{asd:.4f} | AUC {cm:.4f}±{csd:.4f}")
+
+    print(f"\n  significance: S+L+Z vs S+L (paired across {len(args.folds)} folds)")
+    for key, label in tags:
+        print(f"   [{label}]")
+        paired_report("AUC-ROC (S+L+Z) vs (S+L)",
+                      rec[key]["full_au"], rec[key]["base_au"])
+        paired_report("AUPR    (S+L+Z) vs (S+L)",
+                      rec[key]["full_ap"], rec[key]["base_ap"])
+
+    print(f"\n  significance: does RL beat supervised? (paired dZ across folds)")
+    paired_report("AUC-ROC (+RL dZ) vs (pretrain dZ)", rec["rl"]["auc"], rec["pre"]["auc"])
+    paired_report("AUPR    (+RL dZ) vs (pretrain dZ)", rec["rl"]["aupr"], rec["pre"]["aupr"])
+    paired_report("AUC-ROC (scratch dZ) vs (pretrain dZ)", rec["scratch"]["auc"], rec["pre"]["auc"])
+    paired_report("AUPR    (scratch dZ) vs (pretrain dZ)", rec["scratch"]["aupr"], rec["pre"]["aupr"])
+    print("\n  Read: RL earns its place only if +RL dZ > pretrain dZ with a real")
+    print("  paired effect, AND RL-from-scratch at least matches supervised.")
 
 
 if __name__ == "__main__":
