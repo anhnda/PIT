@@ -201,40 +201,45 @@ def main():
                                    ("S+L+MS",["S","L","MS"]),
                                    ("S+L+Z",["S","L","Z"]),
                                    ("S+L+MS+Z",["S","L","MS","Z"])]:
-                    a,_ = fit_score(tr_b,tr_Y,te_b,te_Y,spec,c)
-                    row[name] = a
-                za,_ = fit_score(tr_b,tr_Y,te_b,te_Y,["Z"],c)
+                    a,r = fit_score(tr_b,tr_Y,te_b,te_Y,spec,c)
+                    row[name] = a          # AUPR
+                    row[name+"@auc"] = r   # AUC-ROC
+                za,zr = fit_score(tr_b,tr_Y,te_b,te_Y,["Z"],c)
                 row["Zalone"] = za
+                row["Zalone@auc"] = zr
                 res[c][h].append(row)
         print(f"fold {fi}: test n={len(te_Y)} pos={int(te_Y.sum())}", flush=True)
 
     for c in args.clf:
-        print(f"\n=== TEST AUPR, clf={c}, encoder={args.encoder}, {len(args.folds)} folds ===")
+        print(f"\n=== TEST (AUC-ROC | AUPR), clf={c}, encoder={args.encoder}, {len(args.folds)} folds ===")
         for h in args.head:
             rows = res[c][h]
             print(f"\n  head={h}")
             cfgs = ["S","S+L","S+L+MS","S+L+Z","S+L+MS+Z"]
+            print(f"    {'':<10} {'AUC-ROC':<18} {'AUPR':<18}")
             for name in cfgs:
-                vals = np.array([r[name] for r in rows])
-                print(f"    {name:<10} {vals.mean():.4f} ± {vals.std():.4f}")
-            # key deltas on test, mean±std
-            def dl(a,b):
-                d = np.array([r[a] for r in rows]) - np.array([r[b] for r in rows])
-                # paired, per-fold: how many folds improved, and is the mean
-                # improvement consistent relative to the PAIRED spread (not the
-                # across-fold spread of absolute difficulty).
+                au = np.array([r[name+"@auc"] for r in rows])
+                ap = np.array([r[name] for r in rows])
+                print(f"    {name:<10} {au.mean():.4f} ± {au.std():.4f}    "
+                      f"{ap.mean():.4f} ± {ap.std():.4f}")
+            # key deltas on test, paired per-fold, for a given metric suffix
+            def dl(a, b, suf=""):
+                arr_a = np.array([r[a+suf] for r in rows])
+                arr_b = np.array([r[b+suf] for r in rows])
+                d = arr_a - arr_b
                 wins = int((d > 0).sum()); n = len(d)
                 pstd = d.std(ddof=1) if n > 1 else 0.0
                 tstat = d.mean() / (pstd/np.sqrt(n) + 1e-9)
                 sig = "[OK]" if abs(tstat) >= 2.0 else "[weak]"
                 return (f"{d.mean():+.4f} | per-fold: {[f'{x:+.4f}' for x in d]} "
                         f"| wins {wins}/{n} | t={tstat:+.2f} {sig}")
-            za = np.array([r["Zalone"] for r in rows]).mean()
-            print(f"    --- deltas (test, PAIRED per-fold) ---")
-            print(f"    MS over S+L      (S+L+MS)-(S+L)   : {dl('S+L+MS','S+L')}")
-            print(f"    Z  over S+L      (S+L+Z)-(S+L)    : {dl('S+L+Z','S+L')}")
-            print(f"    Z over S+L+MS  (S+L+MS+Z)-(S+L+MS): {dl('S+L+MS+Z','S+L+MS')}")
-            print(f"    Z-alone AUPR: {za:.4f}")
+            for metric, suf in [("AUC-ROC", "@auc"), ("AUPR", "")]:
+                za = np.array([r["Zalone"+suf] for r in rows]).mean()
+                print(f"    --- deltas [{metric}] (test, PAIRED per-fold) ---")
+                print(f"    MS over S+L      (S+L+MS)-(S+L)   : {dl('S+L+MS','S+L',suf)}")
+                print(f"    Z  over S+L      (S+L+Z)-(S+L)    : {dl('S+L+Z','S+L',suf)}")
+                print(f"    Z over S+L+MS  (S+L+MS+Z)-(S+L+MS): {dl('S+L+MS+Z','S+L+MS',suf)}")
+                print(f"    Z-alone {metric}: {za:.4f}")
 
 
 if __name__=="__main__":
