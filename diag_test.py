@@ -133,19 +133,25 @@ def pretrain(net, head_name, loader, val_loader, epochs, lr=1e-3):
 def blocks(net, patients, feats, enc, stats):
     ds = HybridDataset(patients, feats, enc, stats)
     ld = DataLoader(ds, batch_size=32, shuffle=False, collate_fn=hybrid_collate_fn)
-    S,L,Z,Y = [],[],[],[]
+    S,L,MS,Z,Y = [],[],[],[],[]
     with torch.no_grad():
         for t, lbl, s in ld:
             _,_,mean = net(t, deterministic=True); Z.append(mean.cpu().numpy())
             vals=t['values'].cpu().numpy(); masks=t['masks'].cpu().numpy()
             for i in range(len(vals)):
-                last=[]
+                last=[]; mn=[]; sd=[]
                 for f in range(vals.shape[2]):
                     idx=np.where(masks[i,:,f]>0)[0]
-                    last.append(vals[i,idx[-1],f] if len(idx) else 0.0)
-                L.append(last)
+                    if len(idx):
+                        vv=vals[i,idx,f]
+                        last.append(vv[-1]); mn.append(float(np.mean(vv)))
+                        sd.append(float(np.std(vv)) if len(vv)>1 else 0.0)
+                    else:
+                        last.append(0.0); mn.append(0.0); sd.append(0.0)
+                L.append(last); MS.append(mn+sd)
             S.append(s.numpy()); Y.extend(lbl.numpy())
-    return {"S":np.vstack(S),"L":np.array(L),"Z":np.vstack(Z)}, np.array(Y)
+    return {"S":np.vstack(S),"L":np.array(L),"MS":np.array(MS),
+            "Z":np.vstack(Z)}, np.array(Y)
 
 
 def fit_score(tr_b, tr_Y, te_b, te_Y, spec, clf):
@@ -187,29 +193,41 @@ def main():
             torch.manual_seed(0); np.random.seed(0)
             net = make_net(args.encoder, len(feats)).to(DEVICE)
             net = pretrain(net, h, tr_loader, val_loader, args.epochs)
-            # z for TRAIN (to fit classifier) and TEST (to score) — test never
-            # seen by the encoder.
             tr_b, tr_Y = blocks(net, train_full.patientList, feats, enc, stats)
             te_b, te_Y = blocks(net, test_p.patientList, feats, enc, stats)
             for c in args.clf:
-                ba, bc = fit_score(tr_b,tr_Y,te_b,te_Y,["S","L"],c)
-                fa, fc = fit_score(tr_b,tr_Y,te_b,te_Y,["S","L","Z"],c)
-                za, _  = fit_score(tr_b,tr_Y,te_b,te_Y,["Z"],c)
-                res[c][h].append((fa-ba, fc-bc, za, ba, fa))
+                row = {}
+                for name, spec in [("S",["S"]),("S+L",["S","L"]),
+                                   ("S+L+MS",["S","L","MS"]),
+                                   ("S+L+Z",["S","L","Z"]),
+                                   ("S+L+MS+Z",["S","L","MS","Z"])]:
+                    a,_ = fit_score(tr_b,tr_Y,te_b,te_Y,spec,c)
+                    row[name] = a
+                za,_ = fit_score(tr_b,tr_Y,te_b,te_Y,["Z"],c)
+                row["Zalone"] = za
+                res[c][h].append(row)
         print(f"fold {fi}: test n={len(te_Y)} pos={int(te_Y.sum())}", flush=True)
 
     for c in args.clf:
-        print(f"\n=== TEST results, clf={c}, encoder={args.encoder}, {len(args.folds)} folds ===")
-        print(f"{'head':<10} | {'S+L AUPR':>9} | {'S+L+Z AUPR':>10} | {'dZ AUPR mean±std':>18} | {'Z-alone':>8}")
-        print("-"*70)
+        print(f"\n=== TEST AUPR, clf={c}, encoder={args.encoder}, {len(args.folds)} folds ===")
         for h in args.head:
-            arr=np.array(res[c][h])
-            dz=arr[:,0]; base=arr[:,3]; full=arr[:,4]; za=arr[:,2]
-            flag="[OK]" if abs(dz.mean())>dz.std() else "[noise]"
-            leak="  <-- z alone too predictive" if za.mean()>0.75 else ""
-            print(f"{h:<10} | {base.mean():9.4f} | {full.mean():10.4f} | "
-                  f"{dz.mean():+.4f} ± {dz.std():.4f} {flag:<8} | {za.mean():8.4f}{leak}")
-        print("  dZ on HELD-OUT TEST. Z-alone high => z memorized the label.")
+            rows = res[c][h]
+            print(f"\n  head={h}")
+            cfgs = ["S","S+L","S+L+MS","S+L+Z","S+L+MS+Z"]
+            for name in cfgs:
+                vals = np.array([r[name] for r in rows])
+                print(f"    {name:<10} {vals.mean():.4f} ± {vals.std():.4f}")
+            # key deltas on test, mean±std
+            def dl(a,b):
+                d = np.array([r[a] for r in rows]) - np.array([r[b] for r in rows])
+                f = "[OK]" if abs(d.mean())>d.std() else "[noise]"
+                return f"{d.mean():+.4f} ± {d.std():.4f} {f}"
+            za = np.array([r["Zalone"] for r in rows]).mean()
+            print(f"    --- deltas (test) ---")
+            print(f"    MS over S+L      (S+L+MS)-(S+L)   : {dl('S+L+MS','S+L')}")
+            print(f"    Z  over S+L      (S+L+Z)-(S+L)    : {dl('S+L+Z','S+L')}")
+            print(f"    Z over S+L+MS  (S+L+MS+Z)-(S+L+MS): {dl('S+L+MS+Z','S+L+MS')}")
+            print(f"    Z-alone AUPR: {za:.4f}")
 
 
 if __name__=="__main__":
