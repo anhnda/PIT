@@ -45,6 +45,7 @@ import argparse, numpy as np, torch
 from torch.utils.data import DataLoader
 from sklearn.metrics import average_precision_score, roc_auc_score
 from sklearn.model_selection import StratifiedKFold
+from scipy import stats as sp_stats
 
 from TabPFNRL import (
     FIXED_FEATURES, RNNPolicyNetwork, HybridDataset,
@@ -360,7 +361,6 @@ def run_holdout(patients, feats, enc, args):
     # the other folds as TRAIN. Hold-out is scored only at the val-selected epoch.
     from sklearn.model_selection import StratifiedKFold
     skf = StratifiedKFold(n_splits=args.reps, shuffle=True, random_state=args.seed)
-    rem_arr = np.array(rem, dtype=object)
     for rep, (tr_idx, va_idx) in enumerate(skf.split(rem, remY)):
         tr_list = [rem[i] for i in tr_idx]
         val_list = [rem[i] for i in va_idx]
@@ -400,6 +400,24 @@ def print_summary(summ, title):
     print(f"\n  early-stop vs run-to-end (dZ-AUC): "
           f"selected {dau_sel.mean():+.4f} | final-epoch {dau_fin.mean():+.4f} | "
           f"gain {(dau_sel-dau_fin).mean():+.4f}")
+
+    # ---- paired significance: S+L+Z vs S+L, at the val-selected epoch ----
+    def paired(name, full, base):
+        full = np.asarray(full); base = np.asarray(base); d = full - base; n = len(d)
+        t_stat, t_p = sp_stats.ttest_rel(full, base)
+        try:
+            w_stat, w_p = sp_stats.wilcoxon(full, base); w_str = f"W={w_stat:.1f} p={w_p:.4f}"
+        except ValueError as e:
+            w_str = f"n/a ({e})"
+        dz = d.mean() / (d.std(ddof=1) + 1e-12)
+        print(f"    {name:14s} mean dZ {d.mean():+.4f} | wins {int((d>0).sum())}/{n} | "
+              f"paired-t t={t_stat:+.3f} p={t_p:.4f} | Wilcoxon {w_str} | dz={dz:+.2f}")
+
+    print(f"\n  PAIRED TEST  (S+L+Z) vs (S+L)  at val-selected epoch, {len(summ)} folds:")
+    paired("AUC-ROC", fau, bau)
+    paired("AUPR", fap, bap)
+    print("    (dz = Cohen's d for paired diffs; |dz|>0.8 large. n folds is small,")
+    print("     so Wilcoxon p floors at ~0.002 for n=10 / ~0.06 for n=5.)")
 
 
 if __name__ == "__main__":
