@@ -90,8 +90,22 @@ class GatedDecisionHead(nn.Module):
         return torch.sigmoid(self.final(out)).squeeze(-1)
 
 
+class PlainHead(nn.Module):
+    """Standard MLP: Linear-ReLU-Dropout-Linear-ReLU-Linear. No BatchNorm,
+    no GLU, no gating. Clean control to isolate what makes the 'weak' head
+    transfer well — its BatchNorm, or just being a mid-size MLP."""
+    def __init__(self, in_dim, h=128, dropout=0.3):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(in_dim, h), nn.ReLU(), nn.Dropout(dropout),
+            nn.Linear(h, h // 2), nn.ReLU(), nn.Dropout(dropout),
+            nn.Linear(h // 2, 1),
+        )
+    def forward(self, x): return torch.sigmoid(self.net(x)).squeeze(-1)
+
+
 HEADS = {"linear": LinearHead, "weak": WeakHead, "strong": StrongHead,
-         "gated": GatedDecisionHead}
+         "gated": GatedDecisionHead, "plain": PlainHead}
 
 
 def make_clf(name, ratio):
@@ -169,8 +183,8 @@ def main():
     pa = argparse.ArgumentParser()
     pa.add_argument("--folds", type=int, nargs="+", default=[0, 1, 2, 3, 4])
     pa.add_argument("--clf", nargs="+", default=["xgb", "cat"])
-    pa.add_argument("--heads", nargs="+", default=["weak", "gated"],
-                    choices=["linear", "weak", "strong", "gated"])
+    pa.add_argument("--heads", nargs="+", default=["weak", "plain", "gated"],
+                    choices=["linear", "weak", "strong", "gated", "plain"])
     pa.add_argument("--epochs", type=int, default=20)
     pa.add_argument("--seed", type=int, default=27)
     args = pa.parse_args()
