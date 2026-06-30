@@ -126,6 +126,12 @@ def main():
     pa.add_argument("--encoder", default="pool", choices=["final", "pool"],
                     help="final = original last-hidden-state RNN; "
                          "pool = statistical-pooling encoder (mean/std/max/last)")
+    pa.add_argument("--hidden", type=int, default=20,
+                    help="RNN hidden dim. Capacity control: run --encoder final "
+                         "--hidden 80 vs --encoder pool --hidden 20 so both have "
+                         "a comparable pre-latent width (pool pools 4*hidden). If "
+                         "pool-20 still beats final-80, the win is the pooling "
+                         "structure, not parameter count.")
     args = pa.parse_args()
 
     patients = load_and_prepare_patients()
@@ -137,7 +143,7 @@ def main():
     def make_net():
         Net = RNNPolicyNetwork if args.encoder == "final" else PooledRNNPolicyNetwork
         return Net(input_dim=len(temporal_feats),
-                   hidden_dim=20, latent_dim=28, time_dim=32)
+                   hidden_dim=args.hidden, latent_dim=28, time_dim=32)
 
     configs = [
         ("S", ["S"]), ("S+L", ["S", "L"]), ("S+L+MS", ["S", "L", "MS"]),
@@ -152,7 +158,10 @@ def main():
         ("hand-stats value   (S+L+MS)-(S+L)",     "S+L+MS",   "S+L"),
     ]
 
-    print(f"[encoder = {args.encoder}] folds={args.folds} cv={args.cv}\n")
+    print(f"[encoder = {args.encoder}] hidden={args.hidden} folds={args.folds} cv={args.cv}")
+    _probe = make_net()
+    _nparam = sum(p.numel() for p in _probe.parameters())
+    print(f"[encoder param count = {_nparam}]\n")
 
     # results[clf][config] = list of (aupr, auc) across folds
     results = {c: {name: [] for name, _ in configs} for c in args.clf}
