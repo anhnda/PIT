@@ -220,10 +220,17 @@ def main():
             # key deltas on test, mean±std
             def dl(a,b):
                 d = np.array([r[a] for r in rows]) - np.array([r[b] for r in rows])
-                f = "[OK]" if abs(d.mean())>d.std() else "[noise]"
-                return f"{d.mean():+.4f} ± {d.std():.4f} {f}"
+                # paired, per-fold: how many folds improved, and is the mean
+                # improvement consistent relative to the PAIRED spread (not the
+                # across-fold spread of absolute difficulty).
+                wins = int((d > 0).sum()); n = len(d)
+                pstd = d.std(ddof=1) if n > 1 else 0.0
+                tstat = d.mean() / (pstd/np.sqrt(n) + 1e-9)
+                sig = "[OK]" if abs(tstat) >= 2.0 else "[weak]"
+                return (f"{d.mean():+.4f} | per-fold: {[f'{x:+.4f}' for x in d]} "
+                        f"| wins {wins}/{n} | t={tstat:+.2f} {sig}")
             za = np.array([r["Zalone"] for r in rows]).mean()
-            print(f"    --- deltas (test) ---")
+            print(f"    --- deltas (test, PAIRED per-fold) ---")
             print(f"    MS over S+L      (S+L+MS)-(S+L)   : {dl('S+L+MS','S+L')}")
             print(f"    Z  over S+L      (S+L+Z)-(S+L)    : {dl('S+L+Z','S+L')}")
             print(f"    Z over S+L+MS  (S+L+MS+Z)-(S+L+MS): {dl('S+L+MS+Z','S+L+MS')}")
