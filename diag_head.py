@@ -104,8 +104,36 @@ class PlainHead(nn.Module):
     def forward(self, x): return torch.sigmoid(self.net(x)).squeeze(-1)
 
 
+class PlainBNHead(nn.Module):
+    """PlainHead + BatchNorm. Identical to PlainHead in size/depth/dropout;
+    the ONLY difference is BatchNorm after each linear. If plain_bn ~ weak,
+    BatchNorm (not architecture/capacity) is what makes z transfer well."""
+    def __init__(self, in_dim, h=128, dropout=0.3):
+        super().__init__()
+        self.fc1 = nn.Linear(in_dim, h);     self.bn1 = nn.BatchNorm1d(h)
+        self.fc2 = nn.Linear(h, h // 2);     self.bn2 = nn.BatchNorm1d(h // 2)
+        self.fc3 = nn.Linear(h // 2, 1);     self.drop = nn.Dropout(dropout)
+    def forward(self, x):
+        x = self.drop(F.relu(self.bn1(self.fc1(x))))
+        x = self.drop(F.relu(self.bn2(self.fc2(x))))
+        return torch.sigmoid(self.fc3(x)).squeeze(-1)
+
+
+class LinearBNHead(nn.Module):
+    """Logistic head but with a BatchNorm on the input features first. Tests
+    whether BN alone — even with the simplest possible classifier — is enough
+    to make z transfer well."""
+    def __init__(self, in_dim):
+        super().__init__()
+        self.bn = nn.BatchNorm1d(in_dim)
+        self.fc = nn.Linear(in_dim, 1)
+    def forward(self, x):
+        return torch.sigmoid(self.fc(self.bn(x))).squeeze(-1)
+
+
 HEADS = {"linear": LinearHead, "weak": WeakHead, "strong": StrongHead,
-         "gated": GatedDecisionHead, "plain": PlainHead}
+         "gated": GatedDecisionHead, "plain": PlainHead,
+         "plain_bn": PlainBNHead, "linear_bn": LinearBNHead}
 
 
 def make_clf(name, ratio):
@@ -183,8 +211,10 @@ def main():
     pa = argparse.ArgumentParser()
     pa.add_argument("--folds", type=int, nargs="+", default=[0, 1, 2, 3, 4])
     pa.add_argument("--clf", nargs="+", default=["xgb", "cat"])
-    pa.add_argument("--heads", nargs="+", default=["weak", "plain", "gated"],
-                    choices=["linear", "weak", "strong", "gated", "plain"])
+    pa.add_argument("--heads", nargs="+",
+                    default=["weak", "plain", "plain_bn", "linear", "linear_bn"],
+                    choices=["linear", "weak", "strong", "gated", "plain",
+                             "plain_bn", "linear_bn"])
     pa.add_argument("--epochs", type=int, default=20)
     pa.add_argument("--seed", type=int, default=27)
     args = pa.parse_args()
