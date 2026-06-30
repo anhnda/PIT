@@ -140,13 +140,15 @@ def fit_score(tr_b, tr_Y, te_b, te_Y, spec, clf_name):
 
 
 def test_dZ(net, tr_p, te_p, feats, enc, stats, clf):
-    """Returns dict with dZ AND absolute base (S+L) / full (S+L+Z) for AUPR+AUC."""
+    """Returns dict with dZ AND absolute base/full for AUPR+AUC, plus the train
+    Z block so the caller can compute drift without a second forward pass."""
     tr_b, tr_Y = blocks_for_eval(net, tr_p, feats, enc, stats)
     te_b, te_Y = blocks_for_eval(net, te_p, feats, enc, stats)
     a0, c0 = fit_score(tr_b, tr_Y, te_b, te_Y, ["S", "L"], clf)
     a1, c1 = fit_score(tr_b, tr_Y, te_b, te_Y, ["S", "L", "Z"], clf)
     return dict(dAUPR=a1 - a0, dAUC=c1 - c0,
-                base_AUPR=a0, base_AUC=c0, full_AUPR=a1, full_AUC=c1)
+                base_AUPR=a0, base_AUC=c0, full_AUPR=a1, full_AUC=c1,
+                trainZ=tr_b["Z"])
 
 
 # ---------------------------------------------------------------- reward
@@ -180,8 +182,7 @@ def rl_rloo(net, tr_p, te_p, feats, enc, stats, clf, epochs, eval_every,
     def snapshot(ep, rstats):
         net.eval()
         m = test_dZ(net, tr_p, te_p, feats, enc, stats, clf)
-        cur_b, _ = blocks_for_eval(net, tr_p, feats, enc, stats)
-        drift = float(np.linalg.norm(cur_b["Z"] - z_ref) / np.sqrt(len(z_ref)))
+        drift = float(np.linalg.norm(m["trainZ"] - z_ref) / np.sqrt(len(z_ref)))
         log.append(dict(epoch=ep, test_dAUPR=m["dAUPR"], test_dAUC=m["dAUC"],
                         base_AUPR=m["base_AUPR"], base_AUC=m["base_AUC"],
                         full_AUPR=m["full_AUPR"], full_AUC=m["full_AUC"],
