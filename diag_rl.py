@@ -227,7 +227,7 @@ def main():
 
     for fi in args.folds:
         train_full, test_p = all_folds[fi]
-        tr_obj, val_obj = split_patients_train_val(train_full, val_ratio=0.1, seed=42 + fi)
+        tr_obj, val_obj = split_patients_train_val(train_full, val_ratio=0.1, seed=42)
         tp = tr_obj.patientList
         stats = HybridDataset(tp, feats, enc).get_normalization_stats()
         tr_loader = DataLoader(HybridDataset(tp, feats, enc, stats), batch_size=32,
