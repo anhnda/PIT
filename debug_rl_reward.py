@@ -223,14 +223,14 @@ def rl_scratch_logged(net, tr_p, te_p, feats, enc, stats, clf, epochs, eval_ever
 
 
 # ---------------------------------------------------------------- report
-def report(fold, mode, log):
+def report(fold, mode, lr, log):
     eps   = np.array([r["epoch"]      for r in log])
     te_ap = np.array([r["test_dAUPR"] for r in log])
     te_au = np.array([r["test_dAUC"]  for r in log])
     base_ap, base_au = te_ap[0], te_au[0]
     best_i = int(np.argmax(te_ap)); final_i = len(log) - 1
 
-    print(f"\n----  FOLD {fold}  reward={mode}  ----")
+    print(f"\n----  FOLD {fold}  reward={mode}  lr={lr:g}  ----")
     print(f"  {'ep':>3} | {'test_dAUPR':>10} {'test_dAUC':>9} | {'drift':>6} | "
           f"{'r_mean':>6} {'r_pos':>6} {'r_neg':>6} | {'grad':>5}")
     for r in log:
@@ -239,12 +239,12 @@ def report(fold, mode, log):
               f"{r['r_neg']:>6.3f} | {r['grad']:>5.2f}")
     print(f"  start dZ-AUPR {base_ap:+.4f} | best {te_ap[best_i]:+.4f} @ep{eps[best_i]} "
           f"| final {te_ap[final_i]:+.4f}  (>0 = above S+L baseline)")
-    # did positives ever wake up?
     rp = np.array([r["r_pos"] for r in log if not np.isnan(r["r_pos"])])
-    print(f"  r_pos range over run: [{rp.min():.3f}, {rp.max():.3f}] "
-          f"(base mode froze ~0.34 -> want this to rise)")
-    return dict(fold=fold, mode=mode, start=base_ap, best=te_ap[best_i],
-                final=te_ap[final_i], rpos_max=float(rp.max()))
+    print(f"  r_pos range: [{rp.min():.3f}, {rp.max():.3f}] | "
+          f"final drift {log[-1]['drift']:.3f}")
+    return dict(fold=fold, mode=mode, lr=lr, start=base_ap, best=te_ap[best_i],
+                final=te_ap[final_i], rpos_max=float(rp.max()),
+                drift=float(log[-1]['drift']))
 
 
 def main():
@@ -253,8 +253,10 @@ def main():
     pa.add_argument("--folds", type=int, nargs="+", default=[8, 9])
     pa.add_argument("--clf", default="tabpfn", choices=["xgb", "cat", "tabpfn"])
     pa.add_argument("--reward_modes", nargs="+",
-                    default=["base", "posw", "balanced", "ap"],
+                    default=["base", "posw"],
                     choices=["base", "posw", "balanced", "ap"])
+    pa.add_argument("--lrs", type=float, nargs="+", default=[3e-4, 1e-3, 3e-3],
+                    help="learning-rate sweep; base@high-lr vs posw@3e-4 is the test")
     pa.add_argument("--pos_weight", type=float, default=6.0,
                     help="positive upweight in posw mode; needs to exceed neg/pos "
                          "ratio (~3.7) to push positive advantage above zero")
@@ -279,27 +281,37 @@ def main():
         stats = HybridDataset(tp, feats, enc).get_normalization_stats()
 
         for mode in args.reward_modes:
-            torch.manual_seed(0); np.random.seed(0)
-            net = make_net(args.encoder, len(feats)).to(DEVICE)
-            log = rl_scratch_logged(net, tp, test_p.patientList, feats, enc, stats,
-                                    clf=args.clf, epochs=args.rl_epochs,
-                                    eval_every=args.eval_every, mode=mode,
-                                    pos_weight=args.pos_weight)
-            summ.append(report(fi, mode, log))
+            for lr in args.lrs:
+                torch.manual_seed(0); np.random.seed(0)
+                net = make_net(args.encoder, len(feats)).to(DEVICE)
+                log = rl_scratch_logged(net, tp, test_p.patientList, feats, enc, stats,
+                                        clf=args.clf, epochs=args.rl_epochs,
+                                        eval_every=args.eval_every, mode=mode,
+                                        pos_weight=args.pos_weight, lr=lr)
+                summ.append(report(fi, mode, lr, log))
 
     print("\n\n================  SUMMARY (scratch only)  ================")
-    print(f"  {'fold':>4} {'reward':>9} | {'start':>8} {'best':>8} {'final':>8} | "
-          f"{'rpos_max':>8} | {'final>0?':>8}")
+    print(f"  {'fold':>4} {'reward':>8} {'lr':>7} | {'start':>8} {'best':>8} {'final':>8} | "
+          f"{'rpos_max':>8} {'drift':>6} | {'final>0?':>8}")
     for s in summ:
         flag = "YES" if s['final'] > 0 else "no"
-        print(f"  {s['fold']:>4} {s['mode']:>9} | {s['start']:>+8.4f} {s['best']:>+8.4f} "
-              f"{s['final']:>+8.4f} | {s['rpos_max']:>8.3f} | {flag:>8}")
+        print(f"  {s['fold']:>4} {s['mode']:>8} {s['lr']:>7g} | {s['start']:>+8.4f} "
+              f"{s['best']:>+8.4f} {s['final']:>+8.4f} | {s['rpos_max']:>8.3f} "
+              f"{s['drift']:>6.3f} | {flag:>8}")
+    print("\n  The test: does base@high-lr reach posw@3e-4 ?")
+    for f in args.folds:
+        base_hi = [s for s in summ if s['fold']==f and s['mode']=='base']
+        posw = [s for s in summ if s['fold']==f and s['mode']=='posw' and abs(s['lr']-3e-4)<1e-9]
+        if base_hi and posw:
+            bh = max(base_hi, key=lambda s: s['final'])
+            pw = posw[0]
+            print(f"    fold {f}: best base = {bh['final']:+.4f} (lr={bh['lr']:g}) "
+                  f"| posw@3e-4 = {pw['final']:+.4f} | gap {bh['final']-pw['final']:+.4f}")
     print("\n  Read:")
-    print("  * base is the control (r_pos frozen, AUPR capped negative on fold 8).")
-    print("  * if posw/balanced/ap lift r_pos AND push fold-8 final less negative")
-    print("    (toward / above 0), the dead-positive reward was the bottleneck.")
-    print("  * compare 'best' vs 'final': if best >> final, the good reward also")
-    print("    needs a stop (but pick the reward that makes final itself good).")
+    print("  * if base@high-lr ~= posw@3e-4 (small gap) AND their final drifts match,")
+    print("    posw was just a higher effective lr -> reward shaping is NOT a lever.")
+    print("  * if no lr lifts fold 8 above 0, the negative dZ is a representation/")
+    print("    data floor on that fold, not something RL tuning can fix.")
 
 
 if __name__ == "__main__":
