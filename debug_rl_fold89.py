@@ -32,8 +32,10 @@ reward -- the classic REINFORCE-eats-itself failure, and the reward (not the
 fold) is the thing to fix.
 
 Run:  python debug_rl_fold89.py --folds 8 9 --clf tabpfn --rl_epochs 60 \
-                                --eval_every 2 --reward_clf xgb
-(reward_clf xgb keeps the per-epoch inner-CV cheap; final dZ still uses --clf.)
+                                --eval_every 2
+(reward, train proxy, and final dZ all use --clf, so the reward boundary
+matches the boundary dZ is scored on. tabpfn here = slow; cut rl_epochs or
+raise eval_every if needed.)
 """
 import argparse, copy, numpy as np, torch, torch.nn as nn
 from torch.utils.data import DataLoader
@@ -281,8 +283,6 @@ def main():
     pa.add_argument("--folds", type=int, nargs="+", default=[8, 9])
     pa.add_argument("--clf", default="tabpfn", choices=["xgb", "cat", "tabpfn"],
                     help="classifier for dZ eval + train proxy")
-    pa.add_argument("--reward_clf", default="xgb", choices=["xgb", "cat", "tabpfn"],
-                    help="cheap classifier for per-epoch OOF reward")
     pa.add_argument("--encoder", default="final", choices=["final", "pool"])
     pa.add_argument("--pretrain_epochs", type=int, default=20)
     pa.add_argument("--rl_epochs", type=int, default=60)
@@ -311,7 +311,7 @@ def main():
         net = supervised_pretrain(net, tr_loader, val_loader, args.pretrain_epochs)
 
         log = rl_finetune_logged(net, tp, test_p.patientList, feats, enc, stats,
-                                 reward_clf=args.reward_clf, eval_clf=args.clf,
+                                 reward_clf=args.clf, eval_clf=args.clf,
                                  epochs=args.rl_epochs, eval_every=args.eval_every)
         summ.append(analyse(fi, log))
 
