@@ -1,38 +1,44 @@
 """
-debug_rl_rloo.py  --  REINFORCE upgraded with an RLOO (Reinforce-Leave-One-Out)
-baseline, the right variance-reduction for a SINGLE-STEP, BLACK-BOX reward.
+debug_rl_rloo.py  --  REINFORCE with K-sample gradient averaging + cross-patient
+advantage, the right variance-reduction for a SINGLE-STEP, BLACK-BOX reward.
 
-Why RLOO and not PPO/actor-critic
----------------------------------
+Why not PPO / actor-critic
+--------------------------
 This is not sequential RL. One action (sample z), one scalar reward (OOF prob
 from TabPFN), no state transition, no return to bootstrap. TabPFN is
-non-differentiable -- gradient never flows through it; REINFORCE only needs
-grad through log pi(z), with the reward as a scalar multiplier. A PPO critic
-would estimate a future return that doesn't exist here, so it degenerates.
-RLOO is built exactly for black-box, single-step policy gradients.
+non-differentiable -- gradient never flows through it; REINFORCE only needs grad
+through log pi(z), with the reward as a scalar multiplier.
 
-RLOO baseline (leave-one-out is over the K SAMPLES, not over patients)
----------------------------------------------------------------------
-Draw K i.i.d. samples z_1..z_K from the policy for the SAME batch. Each gets a
-per-patient reward R_k (shape [N]). The baseline for sample k is the mean reward
-of the OTHER K-1 samples -- vectorised, no loop, no per-patient refit:
+Why NOT RLOO-over-K (the bug in the first version)
+--------------------------------------------------
+The first cut used a leave-one-out baseline over the K samples:
+b_k = mean of the other K-1 samples' rewards. But the K samples are drawn from
+the SAME policy on the SAME batch, so they are near-identical -> R_k - mean(R_j)
+collapsed to ~0, and the advantage (A_pos, A_neg) printed as 0.000 every epoch.
+That cancelled exactly the signal we need (per-patient reward difference between
+positives and negatives), so RL learned almost nothing (grad ~0.1).
 
-    b_k = (sum_j R_j - R_k) / (K - 1)          # [K, N]
-    A_k = R_k - b_k
-    loss = -(1/K) sum_k  logp_k * A_k
+Corrected scheme
+----------------
+Baseline is CROSS-PATIENT, per sample: A_k = (R_k - mean_n R_k)/std_n R_k (or a
+running whiten across epochs). This keeps the between-patient signal. The K
+samples then only AVERAGE the gradient, cutting single-sample MC variance:
 
-This is an unbiased, lower-variance gradient than single-sample REINFORCE with a
-batch-mean baseline. Cost = K reward evaluations per epoch (K full OOF fits).
-Keep K small (2-4); RLOO already helps at K=2.
+    A_k = whiten_patients(R_k)              # [N], keeps pos/neg structure
+    loss = mean_k [ -(logp_k * A_k).mean() ]
 
-Reward whitening: a running mean/std of the reward across epochs stabilises the
-advantage scale (vs normalising inside one batch only).
+Cost = K reward evaluations / epoch. Keep K small (2-4).
 
-Branch: scratch only (pretrain was shown to hold bad folds underwater).
-Reward: same OOF p(true class) as before, reward clf == eval clf.
+Honest caveat: r_pos stays ~0.33 (TabPFN OOF barely flags positives), so even
+with correct variance reduction the positive advantage may stay negative -- that
+is the reward wall from every prior debug, not something K-sampling fixes. This
+script isolates whether VARIANCE was also hurting.
 
-Run:  python debug_rl_rloo.py --folds 8 9 --clf tabpfn --K 4 \
-          --rl_epochs 80 --eval_every 4 --lr 1e-3
+Branch: scratch only. Reward clf == eval clf.
+
+Run:  python debug_rl_rloo.py --folds 8 9 --clf tabpfn --K 4 --rl_epochs 80 \
+          --eval_every 4 --lr 1e-3
+      python debug_rl_rloo.py --holdout --reps 5 --clf tabpfn --K 4
 Tip:  OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 python debug_rl_rloo.py ...
 """
 import argparse, numpy as np, torch
@@ -191,38 +197,38 @@ def rl_rloo(net, tr_p, te_p, feats, enc, stats, clf, epochs, eval_every,
             # ---- draw K samples, collect logp and rewards ----
             logps = []                       # list of [N] tensors (keep graph)
             R = np.empty((K, N), dtype=float)
+            z_last = None
             for k in range(K):
                 z, logp, mean = net(t, deterministic=False, temperature=1.0)
                 logps.append(logp)           # [N], differentiable wrt policy
+                z_last = z
                 Xz = torch.cat([s, z], dim=1).detach().cpu().numpy()
                 R[k] = oof_reward(Xz, Y, clf, seed=k)  # different fold seed per sample
 
-            # ---- reward whitening (running) ----
+            # ---- advantage = CROSS-PATIENT baseline, per sample ----
+            # (the signal we must keep is between patients: a positive whose z
+            #  earns higher reward than the patient-mean should be reinforced.
+            #  Leaving-one-out over the K near-identical samples would cancel
+            #  this to ~0 -- that was the bug. K is used only to average the
+            #  gradient and cut variance, NOT to form the baseline.)
             if whiten:
+                # running mean/std over per-patient reward, across epochs
                 batch_mean = R.mean(); batch_var = R.var()
                 run_n += 1
                 run_mean += (batch_mean - run_mean) / run_n
                 run_var += (batch_var - run_var) / run_n
-                Rw = (R - run_mean) / (np.sqrt(run_var) + 1e-8)
+                A = (R - run_mean) / (np.sqrt(run_var) + 1e-8)         # [K,N]
             else:
-                Rw = R
+                # center each sample by its own cross-patient mean
+                A = (R - R.mean(axis=1, keepdims=True)) / \
+                    (R.std(axis=1, keepdims=True) + 1e-8)             # [K,N]
 
-            # ---- RLOO baseline over the K axis (vectorised) ----
-            if K > 1:
-                baseline = (Rw.sum(0, keepdims=True) - Rw) / (K - 1)   # [K,N]
-            else:
-                baseline = np.zeros_like(Rw)
-            A = Rw - baseline                                          # [K,N]
-
-            # ---- policy gradient ----
+            # ---- policy gradient, averaged over K samples ----
             A_t = torch.tensor(A, dtype=torch.float32, device=DEVICE) # [K,N]
-            loss_terms = []
-            for k in range(K):
-                loss_terms.append(-(logps[k] * A_t[k]).mean())
+            loss_terms = [-(logps[k] * A_t[k]).mean() for k in range(K)]
             policy_loss = torch.stack(loss_terms).mean()
 
-            # entropy on the policy's own std (use last sample's z spread as proxy)
-            ent = 0.5 * torch.log(2 * np.pi * np.e * (z.var(dim=0) + 1e-6)).sum()
+            ent = 0.5 * torch.log(2 * np.pi * np.e * (z_last.var(dim=0) + 1e-6)).sum()
             loss = policy_loss - ent_coef * ent
 
             opt.zero_grad(); loss.backward()
