@@ -229,6 +229,19 @@ def rl_rloo(net, tr_p, te_p, feats, enc, stats, clf, epochs, eval_every,
             Y = lbl.numpy().astype(int)
             N = len(Y)
 
+            # ---- last-observed values L (fixed anchor, same as eval [S,L,Z]) ----
+            # z alone is a noisy 28-d sample; anchoring it with the stable S and L
+            # blocks stops the reward classifier from splitting on z-noise, and
+            # matches the eval feature set (S+L+Z) so reward and eval align.
+            vals = t['values'].cpu().numpy(); masks = t['masks'].cpu().numpy()
+            L = np.zeros((N, vals.shape[2]), dtype=np.float32)
+            for i in range(N):
+                for f in range(vals.shape[2]):
+                    idx = np.where(masks[i, :, f] > 0)[0]
+                    if len(idx):
+                        L[i, f] = vals[i, idx[-1], f]
+            s_np = s.detach().cpu().numpy()
+
             # ---- draw K samples, collect logp and rewards ----
             logps = []                       # list of [N] tensors (keep graph)
             R = np.empty((K, N), dtype=float)
@@ -237,7 +250,8 @@ def rl_rloo(net, tr_p, te_p, feats, enc, stats, clf, epochs, eval_every,
                 z, logp, mean = net(t, deterministic=False, temperature=1.0)
                 logps.append(logp)           # [N], differentiable wrt policy
                 z_last = z
-                Xz = torch.cat([s, z], dim=1).detach().cpu().numpy()
+                z_np = z.detach().cpu().numpy()
+                Xz = np.hstack([s_np, L, z_np])   # [S, L, z] -- anchored reward
                 R[k] = oof_reward(Xz, Y, clf, seed=k)  # different fold seed per sample
 
             # ---- advantage = CROSS-PATIENT baseline, per sample ----

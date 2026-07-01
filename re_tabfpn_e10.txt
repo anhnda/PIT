@@ -1,5 +1,28 @@
+Normalize:
 OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 python debug_rl_rloo.py --holdout --reps 10 --K 4 --rl_epochs 10 --eval_every 5 --clf tabpfn --lr 1e-
-3 --stop_metric none                                                                                                                                                 
+3 --stop_metric none   
+normalize tabpfn : ================  SUMMARY (RLOO scratch, 10-fold on remainder, early-stop on val-none, scored on FROZEN hold-out)  ================
+    unit   ep |  S+L AUC   +Z AUC   dZ_AU |  S+L AUPR  +Z AUPR   dZ_AP | final_dAU
+   fold0   10 |   0.8130   0.8253 +0.0123 |    0.5024   0.5135 +0.0112 |   +0.0123
+   fold1   10 |   0.8140   0.8230 +0.0091 |    0.5411   0.5384 -0.0028 |   +0.0091
+   fold2   10 |   0.8075   0.8181 +0.0106 |    0.5113   0.5285 +0.0171 |   +0.0106
+   fold3   10 |   0.8076   0.8124 +0.0048 |    0.5087   0.5112 +0.0025 |   +0.0048
+   fold4   10 |   0.8155   0.8247 +0.0092 |    0.5203   0.5383 +0.0180 |   +0.0092
+   fold5   10 |   0.8041   0.8143 +0.0101 |    0.5173   0.5615 +0.0443 |   +0.0101
+   fold6   10 |   0.8196   0.8262 +0.0066 |    0.5308   0.5480 +0.0172 |   +0.0066
+   fold7   10 |   0.8062   0.8222 +0.0160 |    0.5188   0.5327 +0.0139 |   +0.0160
+   fold8   10 |   0.8179   0.8248 +0.0069 |    0.5294   0.5301 +0.0007 |   +0.0069
+   fold9   10 |   0.8061   0.8142 +0.0081 |    0.5170   0.5414 +0.0244 |   +0.0081
+  At val-selected epoch, across 10 folds:
+    AUC :  S+L 0.8112±0.0052 | S+L+Z 0.8205±0.0050 | dZ +0.0094 wins 10/10
+    AUPR:  S+L 0.5197±0.0109 | S+L+Z 0.5344±0.0142 | dZ +0.0147 wins 9/10
+  early-stop vs run-to-end (dZ-AUC): selected +0.0094 | final-epoch +0.0094 | gain +0.0000
+  PAIRED TEST  (S+L+Z) vs (S+L)  at val-selected epoch, 10 folds:
+    AUC-ROC        mean dZ +0.0094 | wins 10/10 | paired-t t=+9.330 p=0.0000 | Wilcoxon W=0.0 p=0.0020 | dz=+2.95
+    AUPR           mean dZ +0.0147 | wins 9/10 | paired-t t=+3.417 p=0.0077 | Wilcoxon W=3.0 p=0.0098 | dz=+1.08
+    (dz = Cohen's d for paired diffs; |dz|>0.8 large. n folds is small,
+     so Wilcoxon p floors at ~0.002 for n=10 / ~0.06 for n=5.)
+No normalize:                                                                                                                                       
 Using device: cuda                                                                                                                                                   
 Loading patients... False True                                                                                                                                       
 Loading 2                                                                                                                                                            
