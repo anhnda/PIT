@@ -41,11 +41,22 @@ Run:  python debug_rl_rloo.py --folds 8 9 --clf tabpfn --K 4 --rl_epochs 80 \
       python debug_rl_rloo.py --holdout --reps 5 --clf tabpfn --K 4
 Tip:  OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 python debug_rl_rloo.py ...
 """
-import argparse, numpy as np, torch
+import argparse, sys, numpy as np, torch
 from torch.utils.data import DataLoader
 from sklearn.metrics import average_precision_score, roc_auc_score
 from sklearn.model_selection import StratifiedKFold
 from scipy import stats as sp_stats
+
+
+class _Tee:
+    """Mirror everything written to stdout into a log file as well."""
+    def __init__(self, stream, fh):
+        self.stream = stream; self.fh = fh
+    def write(self, data):
+        self.stream.write(data); self.fh.write(data)
+    def flush(self):
+        self.stream.flush(); self.fh.flush()
+
 
 from TabPFNRL import (
     FIXED_FEATURES, RNNPolicyNetwork, HybridDataset,
@@ -365,7 +376,15 @@ def main():
     pa.add_argument("--no_normalize", action="store_true",
                     help="disable input z-scoring (baseline uses raw inputs)")
     pa.add_argument("--seed", type=int, default=27)
+    pa.add_argument("--log", default="log.txt",
+                    help="tee all stdout to this file (default log.txt; "
+                         "set '' or 'none' to disable)")
     args = pa.parse_args()
+
+    if args.log and args.log.lower() != "none":
+        _log_fh = open(args.log, "w")
+        sys.stdout = _Tee(sys.stdout, _log_fh)
+        print(f"[log] mirroring stdout -> {args.log}", flush=True)
 
     global NORMALIZE
     NORMALIZE = not args.no_normalize
