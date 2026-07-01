@@ -347,6 +347,10 @@ def main():
                     help="frozen stratified hold-out + CV-replicates on remainder")
     pa.add_argument("--holdout_frac", type=float, default=0.2)
     pa.add_argument("--holdout_seed", type=int, default=12345)
+    pa.add_argument("--holdout_seeds", type=int, nargs="+", default=None,
+                    help="multiple frozen hold-out seeds; each gives ONE independent "
+                         "dZ point -> cross-seed paired test (the valid unit). "
+                         "Overrides --holdout_seed when set.")
     pa.add_argument("--reps", type=int, default=5)
     pa.add_argument("--clf", default="tabpfn", choices=["xgb", "cat", "tabpfn"])
     pa.add_argument("--K", type=int, default=4, help="policy samples for RLOO")
@@ -373,9 +377,57 @@ def main():
     enc = SimpleStaticEncoder(FIXED_FEATURES); enc.fit(patients.patientList)
 
     if args.holdout:
-        run_holdout(patients, feats, enc, args)
+        seeds = args.holdout_seeds if args.holdout_seeds else [args.holdout_seed]
+        if len(seeds) == 1:
+            run_holdout(patients, feats, enc, args, holdout_seed=seeds[0])
+        else:
+            per_seed = []
+            for sd in seeds:
+                print(f"\n\n########  HOLD-OUT SEED {sd}  ########", flush=True)
+                per_seed.append(run_holdout(patients, feats, enc, args, holdout_seed=sd))
+            print_cross_seed(per_seed)
     else:
         run_folds(patients, feats, enc, args)
+
+
+def print_cross_seed(per_seed):
+    """Paired test where the unit is the HOLD-OUT SEED. Each seed = a disjoint
+    frozen test set, so these dZ points are the independent replicates (unlike
+    CV reps that share one hold-out and overlapping train sets)."""
+    n = len(per_seed)
+    print(f"\n\n================  CROSS-SEED PAIRED TEST  ({n} independent hold-outs)  "
+          f"================")
+    print(f"  {'seed':>8} | {'cvZ_dAU':>8} {'cvZ_dAP':>8} | {'fbZ_dAU':>8} {'fbZ_dAP':>8}")
+    for r in per_seed:
+        print(f"  {r['seed']:>8} | "
+              f"{r['cv_full_au']-r['cv_base_au']:>+8.4f} "
+              f"{r['cv_full_ap']-r['cv_base_ap']:>+8.4f} | "
+              f"{r['fb_full_au']-r['fb_base_au']:>+8.4f} "
+              f"{r['fb_full_ap']-r['fb_base_ap']:>+8.4f}")
+
+    def paired(name, full, base):
+        full = np.asarray(full); base = np.asarray(base); d = full - base
+        t_stat, t_p = sp_stats.ttest_rel(full, base)
+        try:
+            w_stat, w_p = sp_stats.wilcoxon(full, base); w_str = f"W={w_stat:.1f} p={w_p:.4f}"
+        except ValueError as e:
+            w_str = f"n/a ({e})"
+        dz = d.mean() / (d.std(ddof=1) + 1e-12)
+        print(f"    {name:22s} mean dZ {d.mean():+.4f} | wins {int((d>0).sum())}/{n} | "
+              f"t={t_stat:+.3f} p={t_p:.4f} | Wilcoxon {w_str} | dz={dz:+.2f}")
+
+    print(f"\n  Unit = hold-out seed (independent test sets). CV-mean Z (RL-trained):")
+    paired("AUC-ROC (CVmeanZ)",
+           [r['cv_full_au'] for r in per_seed], [r['cv_base_au'] for r in per_seed])
+    paired("AUPR (CVmeanZ)",
+           [r['cv_full_ap'] for r in per_seed], [r['cv_base_ap'] for r in per_seed])
+    print(f"\n  Full-fit Z (all remainder, no CV, untrained Z):")
+    paired("AUC-ROC (fullfitZ)",
+           [r['fb_full_au'] for r in per_seed], [r['fb_base_au'] for r in per_seed])
+    paired("AUPR (fullfitZ)",
+           [r['fb_full_ap'] for r in per_seed], [r['fb_base_ap'] for r in per_seed])
+    print(f"\n  (n={n} seeds: Wilcoxon p floors ~0.06 at n=5, ~0.002 at n=10.")
+    print(f"   These p-values are the defensible ones -- test sets are disjoint.)")
 
 
 def run_folds(patients, feats, enc, args):
@@ -396,11 +448,13 @@ def run_folds(patients, feats, enc, args):
     print_summary(summ, f"RLOO scratch, per-fold, early-stop on val-{args.stop_metric}")
 
 
-def run_holdout(patients, feats, enc, args):
+def run_holdout(patients, feats, enc, args, holdout_seed=None):
+    if holdout_seed is None:
+        holdout_seed = args.holdout_seed
     pl = patients.patientList
     Y_all = cohort_labels(pl, feats, enc)
-    ho, rem, hoY, remY = stratified_holdout(pl, Y_all, args.holdout_frac, args.holdout_seed)
-    print(f"[holdout] frac~{args.holdout_frac:g} seed={args.holdout_seed} "
+    ho, rem, hoY, remY = stratified_holdout(pl, Y_all, args.holdout_frac, holdout_seed)
+    print(f"[holdout] frac~{args.holdout_frac:g} seed={holdout_seed} "
           f"N_holdout={len(ho)} (pos {int(hoY.sum())}, rate {hoY.mean():.3f}) | "
           f"N_remainder={len(rem)}  FROZEN, never seen in training", flush=True)
 
@@ -445,6 +499,19 @@ def run_holdout(patients, feats, enc, args):
     print(f"  S+L    :  AUC {fb_base_au:.4f}  AUPR {fb_base_ap:.4f}")
     print(f"  S+L+Z  :  AUC {fb_full_au:.4f}  AUPR {fb_full_ap:.4f}   "
           f"(dZ AUC {fb_full_au-fb_base_au:+.4f}  dZ AUPR {fb_full_ap-fb_base_ap:+.4f})")
+
+    # per-seed aggregate for the cross-seed paired test (independent test sets).
+    # CV-mean = mean over reps of the val-selected hold-out score (RL-trained Z);
+    # full-fit = single fit on all remainder (untrained Z).
+    cv_base_au = float(np.mean([s['base_au'] for s in summ]))
+    cv_full_au = float(np.mean([s['full_au'] for s in summ]))
+    cv_base_ap = float(np.mean([s['base_ap'] for s in summ]))
+    cv_full_ap = float(np.mean([s['full_ap'] for s in summ]))
+    return dict(seed=holdout_seed,
+                cv_base_au=cv_base_au, cv_full_au=cv_full_au,
+                cv_base_ap=cv_base_ap, cv_full_ap=cv_full_ap,
+                fb_base_au=fb_base_au, fb_full_au=fb_full_au,
+                fb_base_ap=fb_base_ap, fb_full_ap=fb_full_ap)
 
 
 def print_summary(summ, title):
