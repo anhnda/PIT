@@ -425,6 +425,27 @@ def run_holdout(patients, feats, enc, args):
     print_summary(summ, f"RLOO scratch, {args.reps}-fold on remainder, "
                         f"early-stop on val-{args.stop_metric}, scored on FROZEN hold-out")
 
+    # ---- extra base: fit clf on the WHOLE remainder (no CV, val included),
+    #      score on the FROZEN hold-out. Uses the fresh net's deterministic Z
+    #      (same net init as each rep before any RL), so Z is untrained here --
+    #      this isolates the "all-data fit" effect from the RL effect.
+    print(f"\n[full-fit base] fit on ALL remainder (N={len(rem)}, no CV, val included) "
+          f"-> score on FROZEN hold-out (N={len(ho)})", flush=True)
+    stats_full = HybridDataset(rem, feats, enc).get_normalization_stats()
+    torch.manual_seed(0); np.random.seed(0)
+    net_full = make_net(args.encoder, len(feats)).to(DEVICE)
+    net_full.eval()
+    rem_b, rem_Yb = blocks_for_eval(net_full, rem, feats, enc, stats_full)
+    ho_b,  ho_Yb  = blocks_for_eval(net_full, ho,  feats, enc, stats_full)
+    fb_base_ap, fb_base_au = fit_score(rem_b, rem_Yb, ho_b, ho_Yb, ["S", "L"], args.clf)
+    fb_full_ap, fb_full_au = fit_score(rem_b, rem_Yb, ho_b, ho_Yb, ["S", "L", "Z"], args.clf)
+    print(f"\n================  FULL-FIT BASE (all remainder, no CV)  ================")
+    print(f"  fit N={len(rem)} (pos {int(rem_Yb.sum())}, rate {rem_Yb.mean():.3f}) | "
+          f"test N={len(ho_Yb)} (pos {int(ho_Yb.sum())}, rate {ho_Yb.mean():.3f})")
+    print(f"  S+L    :  AUC {fb_base_au:.4f}  AUPR {fb_base_ap:.4f}")
+    print(f"  S+L+Z  :  AUC {fb_full_au:.4f}  AUPR {fb_full_ap:.4f}   "
+          f"(dZ AUC {fb_full_au-fb_base_au:+.4f}  dZ AUPR {fb_full_ap-fb_base_ap:+.4f})")
+
 
 def print_summary(summ, title):
     print(f"\n\n================  SUMMARY ({title})  ================")
