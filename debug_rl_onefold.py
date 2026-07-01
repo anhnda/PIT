@@ -1,62 +1,59 @@
 """
 debug_one_fold.py  --  isolate and deep-debug ONE hold-out CV fold.
 
-Reproduces EXACTLY the same data split, net init, and normalization that
-run_holdout() in debug_rl_rloo.py produces for a given replicate index, so the
-numbers here match the corresponding `foldN` block of a full --holdout run.
+Same CLI as debug_rl_rloo.py --holdout, plus --fold_id. Reproduces EXACTLY the
+data split, net init, and normalization that run_holdout() produces for that
+replicate index, so the numbers match the corresponding `foldN` block of a full
+--holdout run. Touches no other fold; runs no significance test.
 
-What it replicates (must stay bit-identical to run_holdout):
-  hold-out : stratified_holdout(pl, Y_all, HOLDOUT_FRAC, HOLDOUT_SEED) -> rem
-  fold     : StratifiedKFold(n_splits=REPS, shuffle=True, random_state=SEED)
-             .split(rem, remY), take the FOLD_ID-th (tr_idx, va_idx)
-  net seed : torch.manual_seed(FOLD_ID); np.random.seed(FOLD_ID)   # == rep
-  stats    : HybridDataset(tr_list).get_normalization_stats()
-
-Set the knobs below and run. It does NOT touch other folds and does NOT run any
-significance test -- pure single-fold introspection. Hold-out is scored only for
-logging (same as the main script); no selection uses it.
-
-  OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 python debug_one_fold.py
+  OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 python debug_one_fold.py \
+      --reps 10 --K 4 --rl_epochs 40 --eval_every 4 --clf xgb --lr 1e-4 \
+      --stop_metric none --no_normalize --fold_id 1
 """
-import numpy as np, torch
+import argparse, numpy as np, torch
 from sklearn.model_selection import StratifiedKFold
 
 import debug_rl_rloo as D
 from debug_rl_rloo import (
     cohort_labels, stratified_holdout, make_net, rl_rloo, report,
-    blocks_for_eval, fit_score,
 )
 from TabPFNRL import SimpleStaticEncoder, FIXED_FEATURES, HybridDataset
 from TimeEmbeddingVal import get_all_temporal_features, load_and_prepare_patients
 
-# ============================ KNOBS ============================
-FOLD_ID       = 1          # which replicate to debug (0..REPS-1)
 
-# --- these MUST match the full run you are reproducing ---
-HOLDOUT_FRAC  = 0.2
-HOLDOUT_SEED  = 12345
-REPS          = 10
-SEED          = 27         # StratifiedKFold random_state (== args.seed)
-CLF           = "xgb"
-ENCODER       = "final"
-K             = 4
-RL_EPOCHS     = 40
-EVAL_EVERY    = 4
-LR            = 1e-4
-ENT_COEF      = 0.01
-WHITEN        = True
-NO_NORMALIZE  = True       # True == pass --no_normalize
-STOP_METRIC   = "none"     # report() selection; hold-out untouched either way
-
-SAVE_LOG_NPZ  = f"fold{FOLD_ID}_debug.npz"   # per-epoch dump for offline analysis
-# ==============================================================
+def build_argparser():
+    pa = argparse.ArgumentParser()
+    # ---- mirror debug_rl_rloo.main() so the same command line works ----
+    pa.add_argument("--fold_id", type=int, required=True,
+                    help="which replicate (0..reps-1) to debug")
+    pa.add_argument("--holdout", action="store_true",
+                    help="accepted for CLI parity; this script is always holdout")
+    pa.add_argument("--holdout_frac", type=float, default=0.2)
+    pa.add_argument("--holdout_seed", type=int, default=12345)
+    pa.add_argument("--reps", type=int, default=10)
+    pa.add_argument("--clf", default="xgb", choices=["xgb", "cat", "tabpfn"])
+    pa.add_argument("--K", type=int, default=4)
+    pa.add_argument("--encoder", default="final", choices=["final", "pool"])
+    pa.add_argument("--rl_epochs", type=int, default=40)
+    pa.add_argument("--eval_every", type=int, default=4)
+    pa.add_argument("--lr", type=float, default=1e-4)
+    pa.add_argument("--ent_coef", type=float, default=0.01)
+    pa.add_argument("--no_whiten", action="store_true")
+    pa.add_argument("--stop_metric", default="none", choices=["AUC", "AUPR", "none"])
+    pa.add_argument("--no_normalize", action="store_true")
+    pa.add_argument("--seed", type=int, default=27,
+                    help="StratifiedKFold random_state (== args.seed in main)")
+    pa.add_argument("--save_npz", default=None,
+                    help="optional path to dump per-epoch log (default fold{ID}_debug.npz)")
+    return pa
 
 
 def main():
-    D.NORMALIZE = not NO_NORMALIZE
+    args = build_argparser().parse_args()
+    D.NORMALIZE = not args.no_normalize
     print(f"[normalize] input z-scoring = {D.NORMALIZE}", flush=True)
-    print(f"[debug-one-fold] FOLD_ID={FOLD_ID}  clf={CLF}  epochs={RL_EPOCHS}  lr={LR}",
-          flush=True)
+    print(f"[debug-one-fold] fold_id={args.fold_id} clf={args.clf} "
+          f"epochs={args.rl_epochs} lr={args.lr}", flush=True)
 
     patients = load_and_prepare_patients()
     feats = get_all_temporal_features(patients)
@@ -65,54 +62,53 @@ def main():
     # ---- replicate hold-out exactly ----
     pl = patients.patientList
     Y_all = cohort_labels(pl, feats, enc)
-    ho, rem, hoY, remY = stratified_holdout(pl, Y_all, HOLDOUT_FRAC, HOLDOUT_SEED)
-    print(f"[holdout] frac~{HOLDOUT_FRAC:g} seed={HOLDOUT_SEED} "
+    ho, rem, hoY, remY = stratified_holdout(pl, Y_all, args.holdout_frac,
+                                            args.holdout_seed)
+    print(f"[holdout] frac~{args.holdout_frac:g} seed={args.holdout_seed} "
           f"N_holdout={len(ho)} (pos {int(hoY.sum())}, rate {hoY.mean():.3f}) | "
           f"N_remainder={len(rem)}  FROZEN", flush=True)
 
-    # ---- replicate the FOLD_ID-th split exactly ----
-    skf = StratifiedKFold(n_splits=REPS, shuffle=True, random_state=SEED)
+    # ---- replicate the fold_id-th split exactly ----
+    skf = StratifiedKFold(n_splits=args.reps, shuffle=True, random_state=args.seed)
     splits = list(skf.split(rem, remY))
-    if not (0 <= FOLD_ID < len(splits)):
-        raise SystemExit(f"FOLD_ID {FOLD_ID} out of range 0..{len(splits)-1}")
-    tr_idx, va_idx = splits[FOLD_ID]
+    if not (0 <= args.fold_id < len(splits)):
+        raise SystemExit(f"--fold_id {args.fold_id} out of range 0..{len(splits)-1}")
+    tr_idx, va_idx = splits[args.fold_id]
     tr_list = [rem[i] for i in tr_idx]
     val_list = [rem[i] for i in va_idx]
 
     trY = remY[tr_idx]; vaY = remY[va_idx]
-    print(f"[fold{FOLD_ID}] train N={len(tr_list)} (pos {int(trY.sum())}, "
+    print(f"[fold{args.fold_id}] train N={len(tr_list)} (pos {int(trY.sum())}, "
           f"rate {trY.mean():.3f}) | val N={len(val_list)} (pos {int(vaY.sum())}, "
           f"rate {vaY.mean():.3f})", flush=True)
-    # fingerprint the split so you can confirm it matches the full run
-    print(f"[fold{FOLD_ID}] tr_idx[:8]={tr_idx[:8].tolist()}  "
+    print(f"[fold{args.fold_id}] tr_idx[:8]={tr_idx[:8].tolist()}  "
           f"va_idx[:8]={va_idx[:8].tolist()}  "
           f"sum(tr_idx)={int(tr_idx.sum())} sum(va_idx)={int(va_idx.sum())}",
           flush=True)
 
     stats = HybridDataset(tr_list, feats, enc).get_normalization_stats()
 
-    # ---- replicate net init exactly (seed == rep == FOLD_ID) ----
-    torch.manual_seed(FOLD_ID); np.random.seed(FOLD_ID)
-    net = make_net(ENCODER, len(feats)).to(D.DEVICE)
+    # ---- replicate net init exactly (seed == rep == fold_id) ----
+    torch.manual_seed(args.fold_id); np.random.seed(args.fold_id)
+    net = make_net(args.encoder, len(feats)).to(D.DEVICE)
 
     # ---- run RL with full per-epoch logging ----
     log = rl_rloo(net, tr_list, ho, feats, enc, stats,
-                  clf=CLF, epochs=RL_EPOCHS, eval_every=EVAL_EVERY,
-                  K=K, lr=LR, ent_coef=ENT_COEF, whiten=WHITEN, val_p=val_list)
+                  clf=args.clf, epochs=args.rl_epochs, eval_every=args.eval_every,
+                  K=args.K, lr=args.lr, ent_coef=args.ent_coef,
+                  whiten=not args.no_whiten, val_p=val_list)
 
-    report(f"fold{FOLD_ID}", log, K, stop_metric=STOP_METRIC)
+    report(f"fold{args.fold_id}", log, args.K, stop_metric=args.stop_metric)
 
-    # ---- dump every logged field per epoch for offline analysis ----
-    if SAVE_LOG_NPZ:
-        keys = sorted({k for r in log for k in r.keys()})
-        arrs = {k: np.array([r.get(k, np.nan) for r in log], dtype=float)
-                for k in keys}
-        np.savez(SAVE_LOG_NPZ, **arrs)
-        print(f"\n[saved] per-epoch log -> {SAVE_LOG_NPZ}  "
-              f"(fields: {', '.join(keys)})", flush=True)
+    # ---- dump every logged field per epoch ----
+    out = args.save_npz or f"fold{args.fold_id}_debug.npz"
+    keys = sorted({k for r in log for k in r.keys()})
+    arrs = {k: np.array([r.get(k, np.nan) for r in log], dtype=float) for k in keys}
+    np.savez(out, **arrs)
+    print(f"\n[saved] per-epoch log -> {out}  (fields: {', '.join(keys)})", flush=True)
 
-    # ---- extra introspection: val-side dZ trajectory (the ONLY valid signal) ----
-    print(f"\n---- VAL-side dZ trajectory (fold{FOLD_ID}) ----")
+    # ---- val-side dZ trajectory (the ONLY valid signal to analyze) ----
+    print(f"\n---- VAL-side dZ trajectory (fold{args.fold_id}) ----")
     print(f"  {'ep':>3} | {'val_dAUC':>8} {'val_dAUPR':>9} | {'drift':>5} {'A_pos':>6}")
     for r in log:
         print(f"  {r['epoch']:>3} | {r['val_dAUC']:>+8.4f} {r['val_dAUPR']:>+9.4f} | "
