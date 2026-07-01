@@ -393,9 +393,13 @@ def main():
 def print_cross_seed(per_seed):
     """Paired test where the unit is the HOLD-OUT SEED. Each seed = a disjoint
     frozen test set, so these dZ points are the independent replicates (unlike
-    CV reps that share one hold-out and overlapping train sets)."""
+    CV reps that share one hold-out and overlapping train sets).
+
+    Significance test is ONLY run at n>=10 seeds -- below that, Wilcoxon cannot
+    reach significance (floor ~0.25 at n=3, ~0.06 at n=5) so a p-value would be
+    meaningless. Under 10 seeds we report raw dZ + direction only."""
     n = len(per_seed)
-    print(f"\n\n================  CROSS-SEED PAIRED TEST  ({n} independent hold-outs)  "
+    print(f"\n\n================  CROSS-SEED  ({n} independent hold-outs)  "
           f"================")
     print(f"  {'seed':>8} | {'cvZ_dAU':>8} {'cvZ_dAP':>8} | {'fbZ_dAU':>8} {'fbZ_dAP':>8}")
     for r in per_seed:
@@ -404,6 +408,29 @@ def print_cross_seed(per_seed):
               f"{r['cv_full_ap']-r['cv_base_ap']:>+8.4f} | "
               f"{r['fb_full_au']-r['fb_base_au']:>+8.4f} "
               f"{r['fb_full_ap']-r['fb_base_ap']:>+8.4f}")
+
+    def raw(name, full, base):
+        full = np.asarray(full); base = np.asarray(base); d = full - base
+        print(f"    {name:22s} mean dZ {d.mean():+.4f} | "
+              f"wins {int((d>0).sum())}/{n} | std {d.std(ddof=1) if n>1 else 0.0:.4f}")
+
+    cv_dau = ([r['cv_full_au'] for r in per_seed], [r['cv_base_au'] for r in per_seed])
+    cv_dap = ([r['cv_full_ap'] for r in per_seed], [r['cv_base_ap'] for r in per_seed])
+    fb_dau = ([r['fb_full_au'] for r in per_seed], [r['fb_base_au'] for r in per_seed])
+    fb_dap = ([r['fb_full_ap'] for r in per_seed], [r['fb_base_ap'] for r in per_seed])
+
+    print(f"\n  RAW (CV-mean Z, RL-trained):")
+    raw("AUC-ROC (CVmeanZ)", *cv_dau)
+    raw("AUPR (CVmeanZ)",    *cv_dap)
+    print(f"  RAW (full-fit Z, untrained):")
+    raw("AUC-ROC (fullfitZ)", *fb_dau)
+    raw("AUPR (fullfitZ)",    *fb_dap)
+
+    if n < 10:
+        print(f"\n  [n={n} < 10] NO significance test -- Wilcoxon cannot reach "
+              f"significance at this n (floor ~0.25 @n=3, ~0.06 @n=5).")
+        print(f"  Report direction/effect only. Need >=10 seeds for a valid p-value.")
+        return
 
     def paired(name, full, base):
         full = np.asarray(full); base = np.asarray(base); d = full - base
@@ -416,18 +443,13 @@ def print_cross_seed(per_seed):
         print(f"    {name:22s} mean dZ {d.mean():+.4f} | wins {int((d>0).sum())}/{n} | "
               f"t={t_stat:+.3f} p={t_p:.4f} | Wilcoxon {w_str} | dz={dz:+.2f}")
 
-    print(f"\n  Unit = hold-out seed (independent test sets). CV-mean Z (RL-trained):")
-    paired("AUC-ROC (CVmeanZ)",
-           [r['cv_full_au'] for r in per_seed], [r['cv_base_au'] for r in per_seed])
-    paired("AUPR (CVmeanZ)",
-           [r['cv_full_ap'] for r in per_seed], [r['cv_base_ap'] for r in per_seed])
+    print(f"\n  PAIRED TEST (unit = hold-out seed, independent test sets). CV-mean Z:")
+    paired("AUC-ROC (CVmeanZ)", *cv_dau)
+    paired("AUPR (CVmeanZ)",    *cv_dap)
     print(f"\n  Full-fit Z (all remainder, no CV, untrained Z):")
-    paired("AUC-ROC (fullfitZ)",
-           [r['fb_full_au'] for r in per_seed], [r['fb_base_au'] for r in per_seed])
-    paired("AUPR (fullfitZ)",
-           [r['fb_full_ap'] for r in per_seed], [r['fb_base_ap'] for r in per_seed])
-    print(f"\n  (n={n} seeds: Wilcoxon p floors ~0.06 at n=5, ~0.002 at n=10.")
-    print(f"   These p-values are the defensible ones -- test sets are disjoint.)")
+    paired("AUC-ROC (fullfitZ)", *fb_dau)
+    paired("AUPR (fullfitZ)",    *fb_dap)
+    print(f"\n  (n={n} seeds. These p-values are defensible -- test sets are disjoint.)")
 
 
 def run_folds(patients, feats, enc, args):
