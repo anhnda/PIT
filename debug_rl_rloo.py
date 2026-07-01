@@ -265,18 +265,22 @@ def rl_rloo(net, tr_p, te_p, feats, enc, stats, clf, epochs, eval_every,
 # ---------------------------------------------------------------- report
 def report(fold, log, K, stop_metric="AUC"):
     """Pick the epoch by VAL dZ (early-stop signal), then report the HOLD-OUT dZ
-    AT that epoch. Hold-out never participates in epoch selection."""
-    val_key = "val_dAUC" if stop_metric == "AUC" else "val_dAUPR"
-    val = np.array([r[val_key] for r in log])
-    # epoch 0 is random-init; allow it to be the pick too (no-train baseline)
-    if np.all(np.isnan(val)):
-        stop_i = len(log) - 1                      # no val -> last epoch
+    AT that epoch. Hold-out never participates in epoch selection.
+    stop_metric='none' -> just take the final epoch (no early-stop)."""
+    if stop_metric == "none":
+        stop_i = len(log) - 1
     else:
-        stop_i = int(np.nanargmax(val))
+        val_key = "val_dAUC" if stop_metric == "AUC" else "val_dAUPR"
+        val = np.array([r[val_key] for r in log])
+        if np.all(np.isnan(val)):
+            stop_i = len(log) - 1                      # no val -> last epoch
+        else:
+            stop_i = int(np.nanargmax(val))
     final_i = len(log) - 1
     sel = log[stop_i]; fin = log[final_i]
 
-    print(f"\n----  FOLD {fold}  RLOO K={K}  (stop on val-{stop_metric})  ----")
+    sel_label = "final epoch" if stop_metric == "none" else f"stop on val-{stop_metric}"
+    print(f"\n----  FOLD {fold}  RLOO K={K}  ({sel_label})  ----")
     print(f"  {'ep':>3} | {'val_dAUC':>8} {'val_dAUPR':>9} | "
           f"{'ho_dAUC':>8} {'ho_dAUPR':>9} | {'ho_full_AUC':>11} | {'A_pos':>6} {'drift':>5}")
     for i, r in enumerate(log):
@@ -284,7 +288,8 @@ def report(fold, log, K, stop_metric="AUC"):
         print(f"  {r['epoch']:>3} | {r['val_dAUC']:>+8.4f} {r['val_dAUPR']:>+9.4f} | "
               f"{r['test_dAUC']:>+8.4f} {r['test_dAUPR']:>+9.4f} | "
               f"{r['full_AUC']:>11.4f} | {r['A_pos']:>+6.2f} {r['drift']:>5.2f}{mark}")
-    print(f"  SELECTED ep{sel['epoch']} by val-{stop_metric}: "
+    by = "final epoch" if stop_metric == "none" else f"val-{stop_metric}"
+    print(f"  SELECTED ep{sel['epoch']} by {by}: "
           f"HOLD-OUT  S+L AUC {sel['base_AUC']:.4f} AUPR {sel['base_AUPR']:.4f} | "
           f"S+L+Z AUC {sel['full_AUC']:.4f} AUPR {sel['full_AUPR']:.4f} | "
           f"dZ AUC {sel['test_dAUC']:+.4f} dZ AUPR {sel['test_dAUPR']:+.4f}")
@@ -315,8 +320,8 @@ def main():
     pa.add_argument("--lr", type=float, default=1e-3)
     pa.add_argument("--ent_coef", type=float, default=0.01)
     pa.add_argument("--no_whiten", action="store_true")
-    pa.add_argument("--stop_metric", default="AUC", choices=["AUC", "AUPR"],
-                    help="val metric used to pick the early-stop epoch")
+    pa.add_argument("--stop_metric", default="AUC", choices=["AUC", "AUPR", "none"],
+                    help="val metric to pick early-stop epoch; 'none' = final epoch")
     pa.add_argument("--seed", type=int, default=27)
     args = pa.parse_args()
 
