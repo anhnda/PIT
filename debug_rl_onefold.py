@@ -43,8 +43,6 @@ def build_argparser():
     pa.add_argument("--no_normalize", action="store_true")
     pa.add_argument("--seed", type=int, default=27,
                     help="StratifiedKFold random_state (== args.seed in main)")
-    pa.add_argument("--save_npz", default=None,
-                    help="optional path to dump per-epoch log (default fold{ID}_debug.npz)")
     return pa
 
 
@@ -99,20 +97,6 @@ def main():
                   whiten=not args.no_whiten, val_p=val_list)
 
     report(f"fold{args.fold_id}", log, args.K, stop_metric=args.stop_metric)
-
-    # ---- dump every logged field per epoch ----
-    out = args.save_npz or f"fold{args.fold_id}_debug.npz"
-    keys = sorted({k for r in log for k in r.keys()})
-    arrs = {k: np.array([r.get(k, np.nan) for r in log], dtype=float) for k in keys}
-    np.savez(out, **arrs)
-    print(f"\n[saved] per-epoch log -> {out}  (fields: {', '.join(keys)})", flush=True)
-
-    # ---- val-side dZ trajectory (the ONLY valid signal to analyze) ----
-    print(f"\n---- VAL-side dZ trajectory (fold{args.fold_id}) ----")
-    print(f"  {'ep':>3} | {'val_dAUC':>8} {'val_dAUPR':>9} | {'drift':>5} {'A_pos':>6}")
-    for r in log:
-        print(f"  {r['epoch']:>3} | {r['val_dAUC']:>+8.4f} {r['val_dAUPR']:>+9.4f} | "
-              f"{r['drift']:>5.2f} {r['A_pos']:>+6.2f}")
 
 
 if __name__ == "__main__":
