@@ -61,16 +61,19 @@ from utils.prepare_data import trainTestPatients
 
 # ---------------------------------------------------------------- classifiers
 def make_clf(name, ratio):
+    # NOTE: kept symmetric across classifiers. TabPFN has no class-weighting
+    # parameter, so xgb/cat must NOT use scale_pos_weight either, otherwise their
+    # baseline (S+L) is unfairly boosted vs TabPFN on this imbalanced cohort.
     if name == "xgb":
         from xgboost import XGBClassifier
         return XGBClassifier(n_estimators=200, max_depth=4, learning_rate=0.05,
                              subsample=0.8, colsample_bytree=0.8,
-                             scale_pos_weight=ratio, random_state=42, eval_metric="auc")
+                             random_state=42, eval_metric="auc")
     if name == "cat":
         from catboost import CatBoostClassifier
         return CatBoostClassifier(iterations=200, depth=4, learning_rate=0.05,
                                   loss_function="Logloss", eval_metric="AUC",
-                                  scale_pos_weight=ratio, random_seed=42,
+                                  random_seed=42,
                                   verbose=False, allow_writing_files=False, task_type="CPU")
     if name == "tabpfn":
         from tabpfn import TabPFNClassifier
@@ -132,8 +135,24 @@ def blocks_for_eval(net, patients, feats, enc, stats):
     return {"S": np.vstack(S), "L": np.array(L), "Z": np.vstack(Z)}, np.array(Y)
 
 
+# ---------------------------------------------------------------- normalization
+NORMALIZE = True   # set by --no_normalize; standardize inputs to every classifier
+
+def _standardize(Xtr, Xte):
+    """z-score with TRAIN stats only, applied identically to train & test (no leak).
+    Classifier-agnostic: same transform for xgb/cat/tabpfn. Torch."""
+    if not NORMALIZE:
+        return Xtr, Xte
+    Xtr_t = torch.from_numpy(np.ascontiguousarray(Xtr)).float()
+    Xte_t = torch.from_numpy(np.ascontiguousarray(Xte)).float()
+    mu = Xtr_t.mean(dim=0, keepdim=True)
+    sd = Xtr_t.std(dim=0, unbiased=False, keepdim=True) + 1e-8
+    return ((Xtr_t - mu) / sd).numpy(), ((Xte_t - mu) / sd).numpy()
+
+
 def fit_score(tr_b, tr_Y, te_b, te_Y, spec, clf_name):
     Xtr = np.hstack([tr_b[k] for k in spec]); Xte = np.hstack([te_b[k] for k in spec])
+    Xtr, Xte = _standardize(Xtr, Xte)
     ratio = float((tr_Y == 0).sum()) / max(int((tr_Y == 1).sum()), 1)
     c = make_clf(clf_name, ratio); c.fit(Xtr, tr_Y)
     p = c.predict_proba(Xte)[:, 1]
@@ -154,14 +173,17 @@ def test_dZ(net, tr_p, te_p, feats, enc, stats, clf):
 
 # ---------------------------------------------------------------- reward
 def oof_reward(Xz_static, Y, clf_name, K=5, seed=0):
-    """OOF p(true class). Returns reward in [0,1] per patient."""
+    """OOF p(true class). Returns reward in [0,1] per patient.
+    Standardization matches fit_score and is applied per OOF fold (train-fold
+    stats -> held fold), so reward and eval see inputs on the same scale."""
     ratio = float((Y == 0).sum()) / max(int((Y == 1).sum()), 1)
     skf = StratifiedKFold(n_splits=K, shuffle=True, random_state=seed)
     proba = np.full(len(Y), np.nan)
     for tr, va in skf.split(Xz_static, Y):
+        Xtr, Xva = _standardize(Xz_static[tr], Xz_static[va])
         clf = make_clf(clf_name, ratio)
-        clf.fit(Xz_static[tr], Y[tr])
-        proba[va] = clf.predict_proba(Xz_static[va])[:, 1]
+        clf.fit(Xtr, Y[tr])
+        proba[va] = clf.predict_proba(Xva)[:, 1]
     return np.where(Y == 1, proba, 1.0 - proba)
 
 
@@ -322,8 +344,15 @@ def main():
     pa.add_argument("--no_whiten", action="store_true")
     pa.add_argument("--stop_metric", default="AUC", choices=["AUC", "AUPR", "none"],
                     help="val metric to pick early-stop epoch; 'none' = final epoch")
+    pa.add_argument("--no_normalize", action="store_true",
+                    help="disable input z-scoring (baseline uses raw inputs)")
     pa.add_argument("--seed", type=int, default=27)
     args = pa.parse_args()
+
+    global NORMALIZE
+    NORMALIZE = not args.no_normalize
+    print(f"[normalize] input z-scoring = {NORMALIZE} (applied to ALL classifiers)",
+          flush=True)
 
     patients = load_and_prepare_patients()
     feats = get_all_temporal_features(patients)
