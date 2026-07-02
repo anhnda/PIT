@@ -480,7 +480,7 @@ def print_cross_seed(per_seed):
     print(f"\n  PAIRED TEST (unit = hold-out seed, independent test sets). CV-mean Z:")
     paired("AUC-ROC (CVmeanZ)", *cv_dau)
     paired("AUPR (CVmeanZ)",    *cv_dap)
-    print(f"\n  Full-fit Z (all remainder, no CV, untrained Z):")
+    print(f"\n  Full-fit Z (all remainder, no CV, RL-trained once):")
     paired("AUC-ROC (fullfitZ)", *fb_dau)
     paired("AUPR (fullfitZ)",    *fb_dap)
     print(f"\n  (n={n} seeds. These p-values are defensible -- test sets are disjoint.)")
@@ -539,21 +539,30 @@ def run_holdout(patients, feats, enc, args, holdout_seed=None):
     print_summary(summ, f"RLOO scratch, {args.reps}-fold on remainder, "
                         f"early-stop on val-{args.stop_metric}, scored on FROZEN hold-out")
 
-    # ---- extra base: fit clf on the WHOLE remainder (no CV, val included),
-    #      score on the FROZEN hold-out. Uses the fresh net's deterministic Z
-    #      (same net init as each rep before any RL), so Z is untrained here --
-    #      this isolates the "all-data fit" effect from the RL effect.
-    print(f"\n[full-fit base] fit on ALL remainder (N={len(rem)}, no CV, val included) "
-          f"-> score on FROZEN hold-out (N={len(ho)})", flush=True)
+    # ---- full-fit base: TRAIN RL ONCE on the whole remainder (no CV, val
+    #      included), then fit clf and score the FROZEN hold-out. This is the
+    #      honest "no-CV" comparison: same RL-trained Z as the folds, but fit on
+    #      all remainder at once. If dZ here stays positive, the CV dZ is real;
+    #      if it collapses, the CV dZ was a cross-fold-overlap artifact.
+    #      (--neutral_init applies here too, matching the folds.)
+    print(f"\n[full-fit base] TRAIN RL on ALL remainder (N={len(rem)}, no CV, val "
+          f"included) -> score on FROZEN hold-out (N={len(ho)})", flush=True)
     stats_full = HybridDataset(rem, feats, enc).get_normalization_stats()
     torch.manual_seed(0); np.random.seed(0)
     net_full = make_net(args.encoder, len(feats)).to(DEVICE)
+    if args.neutral_init:
+        neutralize_init(net_full)
+    rl_rloo(net_full, rem, ho, feats, enc, stats_full,
+            clf=args.clf, epochs=args.rl_epochs, eval_every=args.eval_every,
+            K=args.K, lr=args.lr, ent_coef=args.ent_coef,
+            whiten=not args.no_whiten, val_p=None)   # no val: no early-stop, run to end
     net_full.eval()
     rem_b, rem_Yb = blocks_for_eval(net_full, rem, feats, enc, stats_full)
     ho_b,  ho_Yb  = blocks_for_eval(net_full, ho,  feats, enc, stats_full)
     fb_base_ap, fb_base_au = fit_score(rem_b, rem_Yb, ho_b, ho_Yb, ["S", "L"], args.clf)
     fb_full_ap, fb_full_au = fit_score(rem_b, rem_Yb, ho_b, ho_Yb, ["S", "L", "Z"], args.clf)
-    print(f"\n================  FULL-FIT BASE (all remainder, no CV)  ================")
+    print(f"\n================  FULL-FIT BASE (all remainder, no CV, RL-trained)  "
+          f"================")
     print(f"  fit N={len(rem)} (pos {int(rem_Yb.sum())}, rate {rem_Yb.mean():.3f}) | "
           f"test N={len(ho_Yb)} (pos {int(ho_Yb.sum())}, rate {ho_Yb.mean():.3f})")
     print(f"  S+L    :  AUC {fb_base_au:.4f}  AUPR {fb_base_ap:.4f}")
@@ -562,7 +571,7 @@ def run_holdout(patients, feats, enc, args, holdout_seed=None):
 
     # per-seed aggregate for the cross-seed paired test (independent test sets).
     # CV-mean = mean over reps of the val-selected hold-out score (RL-trained Z);
-    # full-fit = single fit on all remainder (untrained Z).
+    # full-fit = single RL run on all remainder, then fit (no CV).
     cv_base_au = float(np.mean([s['base_au'] for s in summ]))
     cv_full_au = float(np.mean([s['full_au'] for s in summ]))
     cv_base_ap = float(np.mean([s['base_ap'] for s in summ]))
