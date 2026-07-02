@@ -1,0 +1,1716 @@
+
+
+######## clf=tabpfn lr=1e-2 rl_epochs=10 eval_every=2 ########
+Using device: cuda
+[normalize] input z-scoring = False (applied to ALL classifiers)
+Loading patients... False True
+Loading 2
+From pkl
+<utils.class_patient.Patient object at 0x7f72269bf2b0>
+Loaded 1213 patients
+After cleanup: 1206 patients
+[Landmark] L=24h H=48h | excluded 209 pre-landmark AKI | cohort 1206 -> 997 | pos 217 (21.77%)
+AKI positive (horizon): 217 (21.77%)
+[holdout] frac~0.2 seed=12345 N_holdout=199 (pos 43, rate 0.216) | N_remainder=798  FROZEN, never seen in training
+
+----  FOLD fold0  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  -0.0047   +0.0141 |  +0.0104   +0.0287 |      0.8207 |   +nan  0.00
+    2 |  +0.0140   +0.0221 |  +0.0121   +0.0272 |      0.8224 |  -1.41  0.18
+    4 |  +0.0121   +0.0053 |  +0.0126   +0.0234 |      0.8228 |  -1.41  0.43
+    6 |  +0.0103   -0.0014 |  +0.0130   +0.0129 |      0.8233 |  -1.40  0.91
+    8 |  +0.0163   +0.0059 |  +0.0094   +0.0065 |      0.8196 |  -1.41  1.69
+   10 |  +0.0247   +0.0240 |  +0.0095   +0.0064 |      0.8197 |  -1.40  2.48 <== stop
+  SELECTED ep10 by final epoch: HOLD-OUT  S+L AUC 0.8102 AUPR 0.4987 | S+L+Z AUC 0.8197 AUPR 0.5051 | dZ AUC +0.0095 dZ AUPR +0.0064
+  (for reference, FINAL ep10: dZ AUC +0.0095 dZ AUPR +0.0064)
+
+----  FOLD fold1  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  -0.0042   -0.0033 |  +0.0075   +0.0233 |      0.8209 |   +nan  0.00
+    2 |  +0.0238   +0.0689 |  +0.0145   +0.0060 |      0.8278 |  -1.42  0.15
+    4 |  +0.0126   +0.0631 |  +0.0080   -0.0025 |      0.8213 |  -1.42  0.40
+    6 |  +0.0149   +0.0715 |  +0.0045   -0.0050 |      0.8178 |  -1.41  1.01
+    8 |  +0.0051   +0.0516 |  +0.0040   -0.0143 |      0.8174 |  -1.41  1.69
+   10 |  -0.0023   +0.0192 |  +0.0036   -0.0167 |      0.8169 |  -1.41  2.37 <== stop
+  SELECTED ep10 by final epoch: HOLD-OUT  S+L AUC 0.8134 AUPR 0.5370 | S+L+Z AUC 0.8169 AUPR 0.5202 | dZ AUC +0.0036 dZ AUPR -0.0167
+  (for reference, FINAL ep10: dZ AUC +0.0036 dZ AUPR -0.0167)
+
+----  FOLD fold2  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  -0.0051   +0.0039 |  +0.0080   +0.0145 |      0.8150 |   +nan  0.00
+    2 |  -0.0033   +0.0283 |  +0.0106   +0.0085 |      0.8176 |  -1.43  0.19
+    4 |  -0.0019   +0.0167 |  +0.0113   +0.0062 |      0.8183 |  -1.43  0.47
+    6 |  +0.0037   +0.0242 |  +0.0084   -0.0021 |      0.8154 |  -1.42  1.02
+    8 |  +0.0065   +0.0372 |  +0.0040   -0.0129 |      0.8110 |  -1.43  1.80
+   10 |  +0.0061   +0.0342 |  +0.0001   -0.0184 |      0.8071 |  -1.43  3.09 <== stop
+  SELECTED ep10 by final epoch: HOLD-OUT  S+L AUC 0.8070 AUPR 0.5148 | S+L+Z AUC 0.8071 AUPR 0.4964 | dZ AUC +0.0001 dZ AUPR -0.0184
+  (for reference, FINAL ep10: dZ AUC +0.0001 dZ AUPR -0.0184)
+
+----  FOLD fold3  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0000   -0.0083 |  +0.0051   +0.0095 |      0.8096 |   +nan  0.00
+    2 |  +0.0075   +0.0103 |  +0.0052   -0.0121 |      0.8097 |  -1.38  0.15
+    4 |  +0.0028   +0.0318 |  +0.0052   -0.0078 |      0.8097 |  -1.37  0.34
+    6 |  +0.0019   +0.0090 |  +0.0035   -0.0177 |      0.8080 |  -1.38  0.72
+    8 |  -0.0028   -0.0008 |  +0.0015   -0.0210 |      0.8060 |  -1.37  1.28
+   10 |  -0.0093   -0.0051 |  +0.0016   -0.0128 |      0.8061 |  -1.35  2.14 <== stop
+  SELECTED ep10 by final epoch: HOLD-OUT  S+L AUC 0.8045 AUPR 0.5082 | S+L+Z AUC 0.8061 AUPR 0.4955 | dZ AUC +0.0016 dZ AUPR -0.0128
+  (for reference, FINAL ep10: dZ AUC +0.0016 dZ AUPR -0.0128)
+
+----  FOLD fold4  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0045   +0.0024 |  +0.0039   +0.0150 |      0.8190 |   +nan  0.00
+    2 |  -0.0000   -0.0129 |  +0.0036   -0.0022 |      0.8187 |  -1.44  0.25
+    4 |  +0.0036   -0.0070 |  +0.0031   -0.0054 |      0.8182 |  -1.44  0.66
+    6 |  +0.0063   +0.0014 |  +0.0045   -0.0049 |      0.8197 |  -1.43  1.66
+    8 |  -0.0009   -0.0281 |  +0.0054   -0.0055 |      0.8205 |  -1.43  2.61
+   10 |  +0.0036   -0.0207 |  +0.0048   -0.0041 |      0.8199 |  -1.44  2.96 <== stop
+  SELECTED ep10 by final epoch: HOLD-OUT  S+L AUC 0.8151 AUPR 0.5206 | S+L+Z AUC 0.8199 AUPR 0.5165 | dZ AUC +0.0048 dZ AUPR -0.0041
+  (for reference, FINAL ep10: dZ AUC +0.0048 dZ AUPR -0.0041)
+
+----  FOLD fold5  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  -0.0081   -0.0047 |  +0.0081   +0.0269 |      0.8130 |   +nan  0.00
+    2 |  +0.0314   +0.0818 |  +0.0063   +0.0138 |      0.8112 |  -1.44  0.20
+    4 |  +0.0323   +0.0832 |  +0.0087   -0.0048 |      0.8137 |  -1.43  0.58
+    6 |  +0.0296   +0.0828 |  +0.0113   -0.0025 |      0.8163 |  -1.43  1.26
+    8 |  +0.0233   +0.0697 |  +0.0099   -0.0116 |      0.8148 |  -1.43  1.62
+   10 |  +0.0193   +0.0560 |  +0.0065   -0.0100 |      0.8114 |  -1.43  2.57 <== stop
+  SELECTED ep10 by final epoch: HOLD-OUT  S+L AUC 0.8049 AUPR 0.5287 | S+L+Z AUC 0.8114 AUPR 0.5186 | dZ AUC +0.0065 dZ AUPR -0.0100
+  (for reference, FINAL ep10: dZ AUC +0.0065 dZ AUPR -0.0100)
+
+----  FOLD fold6  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  -0.0018   -0.0048 |  +0.0067   +0.0151 |      0.8251 |   +nan  0.00
+    2 |  +0.0296   +0.0265 |  +0.0081   +0.0242 |      0.8264 |  -1.43  0.18
+    4 |  +0.0296   +0.0349 |  +0.0080   +0.0268 |      0.8263 |  -1.44  0.47
+    6 |  +0.0260   +0.0161 |  +0.0095   +0.0152 |      0.8279 |  -1.43  1.14
+    8 |  +0.0269   -0.0053 |  +0.0092   +0.0193 |      0.8276 |  -1.43  1.95
+   10 |  +0.0224   +0.0279 |  -0.0021   -0.0280 |      0.8163 |  -1.44  2.36 <== stop
+  SELECTED ep10 by final epoch: HOLD-OUT  S+L AUC 0.8184 AUPR 0.5294 | S+L+Z AUC 0.8163 AUPR 0.5014 | dZ AUC -0.0021 dZ AUPR -0.0280
+  (for reference, FINAL ep10: dZ AUC -0.0021 dZ AUPR -0.0280)
+
+----  FOLD fold7  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  -0.0009   -0.0096 |  +0.0053   +0.0200 |      0.8113 |   +nan  0.00
+    2 |  +0.0076   +0.0214 |  +0.0107   -0.0028 |      0.8167 |  -1.41  0.18
+    4 |  -0.0045   +0.0138 |  +0.0084   -0.0028 |      0.8145 |  -1.41  0.29
+    6 |  -0.0099   +0.0131 |  +0.0090   -0.0021 |      0.8151 |  -1.42  0.68
+    8 |  -0.0116   +0.0164 |  +0.0099   -0.0040 |      0.8160 |  -1.40  1.38
+   10 |  -0.0161   +0.0118 |  +0.0051   -0.0084 |      0.8111 |  -1.41  1.99 <== stop
+  SELECTED ep10 by final epoch: HOLD-OUT  S+L AUC 0.8061 AUPR 0.5206 | S+L+Z AUC 0.8111 AUPR 0.5122 | dZ AUC +0.0051 dZ AUPR -0.0084
+  (for reference, FINAL ep10: dZ AUC +0.0051 dZ AUPR -0.0084)
+
+----  FOLD fold8  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0047   +0.0330 |  +0.0063   +0.0025 |      0.8190 |   +nan  0.00
+    2 |  +0.0218   +0.0207 |  +0.0086   +0.0004 |      0.8214 |  -1.43  0.21
+    4 |  +0.0161   +0.0006 |  +0.0099   +0.0004 |      0.8227 |  -1.41  0.59
+    6 |  +0.0081   -0.0014 |  +0.0081   -0.0041 |      0.8208 |  -1.43  1.19
+    8 |  -0.0009   -0.0092 |  +0.0065   +0.0044 |      0.8192 |  -1.43  2.26
+   10 |  +0.0038   -0.0023 |  +0.0024   -0.0037 |      0.8151 |  -1.41  3.66 <== stop
+  SELECTED ep10 by final epoch: HOLD-OUT  S+L AUC 0.8128 AUPR 0.5288 | S+L+Z AUC 0.8151 AUPR 0.5251 | dZ AUC +0.0024 dZ AUPR -0.0037
+  (for reference, FINAL ep10: dZ AUC +0.0024 dZ AUPR -0.0037)
+
+----  FOLD fold9  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  -0.0009   -0.0000 |  +0.0031   +0.0132 |      0.8081 |   +nan  0.00
+    2 |  -0.0009   +0.0013 |  +0.0029   +0.0109 |      0.8078 |  -1.37  0.28
+    4 |  +0.0038   +0.0111 |  +0.0014   +0.0111 |      0.8064 |  -1.37  0.49
+    6 |  -0.0047   -0.0056 |  +0.0029   +0.0002 |      0.8078 |  -1.37  0.84
+    8 |  +0.0000   -0.0033 |  +0.0032   -0.0011 |      0.8081 |  -1.37  1.57
+   10 |  +0.0085   +0.0106 |  +0.0053   -0.0058 |      0.8102 |  -1.37  2.26 <== stop
+  SELECTED ep10 by final epoch: HOLD-OUT  S+L AUC 0.8049 AUPR 0.5197 | S+L+Z AUC 0.8102 AUPR 0.5139 | dZ AUC +0.0053 dZ AUPR -0.0058
+  (for reference, FINAL ep10: dZ AUC +0.0053 dZ AUPR -0.0058)
+
+
+================  SUMMARY (RLOO scratch, 10-fold on remainder, early-stop on val-none, scored on FROZEN hold-out)  ================
+    unit   ep |  S+L AUC   +Z AUC   dZ_AU |  S+L AUPR  +Z AUPR   dZ_AP | final_dAU
+   fold0   10 |   0.8102   0.8197 +0.0095 |    0.4987   0.5051 +0.0064 |   +0.0095
+   fold1   10 |   0.8134   0.8169 +0.0036 |    0.5370   0.5202 -0.0167 |   +0.0036
+   fold2   10 |   0.8070   0.8071 +0.0001 |    0.5148   0.4964 -0.0184 |   +0.0001
+   fold3   10 |   0.8045   0.8061 +0.0016 |    0.5082   0.4955 -0.0128 |   +0.0016
+   fold4   10 |   0.8151   0.8199 +0.0048 |    0.5206   0.5165 -0.0041 |   +0.0048
+   fold5   10 |   0.8049   0.8114 +0.0065 |    0.5287   0.5186 -0.0100 |   +0.0065
+   fold6   10 |   0.8184   0.8163 -0.0021 |    0.5294   0.5014 -0.0280 |   -0.0021
+   fold7   10 |   0.8061   0.8111 +0.0051 |    0.5206   0.5122 -0.0084 |   +0.0051
+   fold8   10 |   0.8128   0.8151 +0.0024 |    0.5288   0.5251 -0.0037 |   +0.0024
+   fold9   10 |   0.8049   0.8102 +0.0053 |    0.5197   0.5139 -0.0058 |   +0.0053
+
+  At val-selected epoch, across 10 folds:
+    AUC :  S+L 0.8097±0.0047 | S+L+Z 0.8134±0.0047 | dZ +0.0037 wins 9/10
+    AUPR:  S+L 0.5207±0.0107 | S+L+Z 0.5105±0.0098 | dZ -0.0102 wins 1/10
+
+  early-stop vs run-to-end (dZ-AUC): selected +0.0037 | final-epoch +0.0037 | gain +0.0000
+
+  PAIRED TEST  (S+L+Z) vs (S+L)  at val-selected epoch, 10 folds:
+    AUC-ROC        mean dZ +0.0037 | wins 9/10 | paired-t t=+3.481 p=0.0069 | Wilcoxon W=3.0 p=0.0098 | dz=+1.10
+    AUPR           mean dZ -0.0102 | wins 1/10 | paired-t t=-3.389 p=0.0080 | Wilcoxon W=4.0 p=0.0137 | dz=-1.07
+    (dz = Cohen's d for paired diffs; |dz|>0.8 large. n folds is small,
+     so Wilcoxon p floors at ~0.002 for n=10 / ~0.06 for n=5.)
+
+[full-fit base] TRAIN RL on ALL remainder (N=798, no CV, val included) -> score on FROZEN hold-out (N=199)
+
+================  FULL-FIT BASE (all remainder, no CV, RL-trained)  ================
+  fit N=798 (pos 174, rate 0.218) | test N=199 (pos 43, rate 0.216)
+  S+L    :  AUC 0.8105  AUPR 0.5116
+  S+L+Z  :  AUC 0.8183  AUPR 0.5087   (dZ AUC +0.0078  dZ AUPR -0.0029)
+
+
+######## clf=tabpfn lr=1e-3 rl_epochs=10 eval_every=2 ########
+Using device: cuda
+[normalize] input z-scoring = False (applied to ALL classifiers)
+Loading patients... False True
+Loading 2
+From pkl
+<utils.class_patient.Patient object at 0x7f45a47932e0>
+Loaded 1213 patients
+After cleanup: 1206 patients
+[Landmark] L=24h H=48h | excluded 209 pre-landmark AKI | cohort 1206 -> 997 | pos 217 (21.77%)
+AKI positive (horizon): 217 (21.77%)
+[holdout] frac~0.2 seed=12345 N_holdout=199 (pos 43, rate 0.216) | N_remainder=798  FROZEN, never seen in training
+
+----  FOLD fold0  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  -0.0047   +0.0141 |  +0.0104   +0.0287 |      0.8207 |   +nan  0.00
+    2 |  +0.0121   +0.0059 |  +0.0116   +0.0222 |      0.8218 |  -1.41  0.01
+    4 |  +0.0075   +0.0029 |  +0.0116   +0.0200 |      0.8219 |  -1.41  0.02
+    6 |  +0.0037   +0.0008 |  +0.0132   +0.0283 |      0.8234 |  -1.41  0.03
+    8 |  +0.0047   -0.0002 |  +0.0142   +0.0204 |      0.8245 |  -1.41  0.04
+   10 |  +0.0047   +0.0013 |  +0.0136   +0.0215 |      0.8238 |  -1.41  0.04 <== stop
+  SELECTED ep10 by final epoch: HOLD-OUT  S+L AUC 0.8102 AUPR 0.4987 | S+L+Z AUC 0.8238 AUPR 0.5203 | dZ AUC +0.0136 dZ AUPR +0.0215
+  (for reference, FINAL ep10: dZ AUC +0.0136 dZ AUPR +0.0215)
+
+----  FOLD fold1  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  -0.0042   -0.0033 |  +0.0075   +0.0233 |      0.8209 |   +nan  0.00
+    2 |  +0.0182   +0.0572 |  +0.0126   +0.0035 |      0.8260 |  -1.42  0.01
+    4 |  +0.0201   +0.0654 |  +0.0134   +0.0064 |      0.8268 |  -1.42  0.02
+    6 |  +0.0163   +0.0516 |  +0.0125   +0.0065 |      0.8259 |  -1.41  0.03
+    8 |  +0.0182   +0.0644 |  +0.0107   +0.0077 |      0.8240 |  -1.42  0.03
+   10 |  +0.0191   +0.0561 |  +0.0125   +0.0016 |      0.8259 |  -1.42  0.04 <== stop
+  SELECTED ep10 by final epoch: HOLD-OUT  S+L AUC 0.8134 AUPR 0.5370 | S+L+Z AUC 0.8259 AUPR 0.5386 | dZ AUC +0.0125 dZ AUPR +0.0016
+  (for reference, FINAL ep10: dZ AUC +0.0125 dZ AUPR +0.0016)
+
+----  FOLD fold2  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  -0.0051   +0.0039 |  +0.0080   +0.0145 |      0.8150 |   +nan  0.00
+    2 |  -0.0005   +0.0351 |  +0.0111   +0.0014 |      0.8181 |  -1.43  0.02
+    4 |  +0.0005   +0.0332 |  +0.0108   +0.0111 |      0.8178 |  -1.43  0.02
+    6 |  +0.0005   +0.0332 |  +0.0110   +0.0072 |      0.8180 |  -1.42  0.03
+    8 |  +0.0005   +0.0344 |  +0.0110   +0.0058 |      0.8180 |  -1.43  0.04
+   10 |  +0.0019   +0.0347 |  +0.0121   +0.0101 |      0.8192 |  -1.42  0.04 <== stop
+  SELECTED ep10 by final epoch: HOLD-OUT  S+L AUC 0.8070 AUPR 0.5148 | S+L+Z AUC 0.8192 AUPR 0.5249 | dZ AUC +0.0121 dZ AUPR +0.0101
+  (for reference, FINAL ep10: dZ AUC +0.0121 dZ AUPR +0.0101)
+
+----  FOLD fold3  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0000   -0.0083 |  +0.0051   +0.0095 |      0.8096 |   +nan  0.00
+    2 |  +0.0047   +0.0021 |  +0.0080   -0.0125 |      0.8125 |  -1.38  0.01
+    4 |  +0.0037   +0.0058 |  +0.0080   -0.0113 |      0.8125 |  -1.38  0.02
+    6 |  +0.0000   +0.0028 |  +0.0054   -0.0139 |      0.8099 |  -1.37  0.03
+    8 |  +0.0014   +0.0027 |  +0.0048   -0.0133 |      0.8093 |  -1.38  0.03
+   10 |  +0.0056   +0.0070 |  +0.0042   -0.0153 |      0.8087 |  -1.37  0.04 <== stop
+  SELECTED ep10 by final epoch: HOLD-OUT  S+L AUC 0.8045 AUPR 0.5082 | S+L+Z AUC 0.8087 AUPR 0.4929 | dZ AUC +0.0042 dZ AUPR -0.0153
+  (for reference, FINAL ep10: dZ AUC +0.0042 dZ AUPR -0.0153)
+
+----  FOLD fold4  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0045   +0.0024 |  +0.0039   +0.0150 |      0.8190 |   +nan  0.00
+    2 |  +0.0036   -0.0114 |  +0.0074   +0.0019 |      0.8225 |  -1.43  0.03
+    4 |  +0.0081   -0.0021 |  +0.0075   +0.0038 |      0.8227 |  -1.44  0.04
+    6 |  +0.0090   +0.0012 |  +0.0065   -0.0025 |      0.8216 |  -1.44  0.05
+    8 |  +0.0108   +0.0067 |  +0.0045   -0.0007 |      0.8196 |  -1.44  0.06
+   10 |  +0.0085   -0.0050 |  +0.0047   -0.0005 |      0.8198 |  -1.44  0.07 <== stop
+  SELECTED ep10 by final epoch: HOLD-OUT  S+L AUC 0.8151 AUPR 0.5206 | S+L+Z AUC 0.8198 AUPR 0.5201 | dZ AUC +0.0047 dZ AUPR -0.0005
+  (for reference, FINAL ep10: dZ AUC +0.0047 dZ AUPR -0.0005)
+
+----  FOLD fold5  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  -0.0081   -0.0047 |  +0.0081   +0.0269 |      0.8130 |   +nan  0.00
+    2 |  +0.0215   +0.0563 |  +0.0101   +0.0206 |      0.8150 |  -1.44  0.02
+    4 |  +0.0228   +0.0618 |  +0.0092   +0.0186 |      0.8141 |  -1.43  0.02
+    6 |  +0.0251   +0.0714 |  +0.0095   +0.0052 |      0.8145 |  -1.43  0.03
+    8 |  +0.0278   +0.0710 |  +0.0110   +0.0259 |      0.8160 |  -1.44  0.04
+   10 |  +0.0251   +0.0602 |  +0.0130   +0.0434 |      0.8179 |  -1.43  0.05 <== stop
+  SELECTED ep10 by final epoch: HOLD-OUT  S+L AUC 0.8049 AUPR 0.5287 | S+L+Z AUC 0.8179 AUPR 0.5720 | dZ AUC +0.0130 dZ AUPR +0.0434
+  (for reference, FINAL ep10: dZ AUC +0.0130 dZ AUPR +0.0434)
+
+----  FOLD fold6  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  -0.0018   -0.0048 |  +0.0067   +0.0151 |      0.8251 |   +nan  0.00
+    2 |  +0.0314   +0.0280 |  +0.0066   +0.0194 |      0.8249 |  -1.43  0.02
+    4 |  +0.0305   +0.0269 |  +0.0071   +0.0135 |      0.8254 |  -1.43  0.03
+    6 |  +0.0332   +0.0348 |  +0.0076   +0.0228 |      0.8260 |  -1.43  0.03
+    8 |  +0.0341   +0.0356 |  +0.0083   +0.0310 |      0.8267 |  -1.43  0.04
+   10 |  +0.0314   +0.0296 |  +0.0075   +0.0313 |      0.8259 |  -1.44  0.05 <== stop
+  SELECTED ep10 by final epoch: HOLD-OUT  S+L AUC 0.8184 AUPR 0.5294 | S+L+Z AUC 0.8259 AUPR 0.5607 | dZ AUC +0.0075 dZ AUPR +0.0313
+  (for reference, FINAL ep10: dZ AUC +0.0075 dZ AUPR +0.0313)
+
+----  FOLD fold7  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  -0.0009   -0.0096 |  +0.0053   +0.0200 |      0.8113 |   +nan  0.00
+    2 |  +0.0045   +0.0114 |  +0.0118   +0.0098 |      0.8178 |  -1.41  0.02
+    4 |  +0.0031   +0.0044 |  +0.0086   -0.0063 |      0.8147 |  -1.41  0.03
+    6 |  +0.0045   +0.0107 |  +0.0097   +0.0034 |      0.8157 |  -1.42  0.04
+    8 |  +0.0027   +0.0068 |  +0.0088   -0.0023 |      0.8148 |  -1.41  0.04
+   10 |  +0.0004   +0.0083 |  +0.0104   +0.0037 |      0.8165 |  -1.41  0.05 <== stop
+  SELECTED ep10 by final epoch: HOLD-OUT  S+L AUC 0.8061 AUPR 0.5206 | S+L+Z AUC 0.8165 AUPR 0.5243 | dZ AUC +0.0104 dZ AUPR +0.0037
+  (for reference, FINAL ep10: dZ AUC +0.0104 dZ AUPR +0.0037)
+
+----  FOLD fold8  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0047   +0.0330 |  +0.0063   +0.0025 |      0.8190 |   +nan  0.00
+    2 |  +0.0028   +0.0099 |  +0.0115   +0.0052 |      0.8242 |  -1.43  0.02
+    4 |  +0.0019   +0.0059 |  +0.0121   +0.0073 |      0.8248 |  -1.42  0.03
+    6 |  -0.0019   -0.0094 |  +0.0113   -0.0022 |      0.8240 |  -1.42  0.03
+    8 |  +0.0033   -0.0142 |  +0.0106   +0.0054 |      0.8233 |  -1.43  0.04
+   10 |  +0.0085   -0.0156 |  +0.0086   -0.0014 |      0.8214 |  -1.42  0.05 <== stop
+  SELECTED ep10 by final epoch: HOLD-OUT  S+L AUC 0.8128 AUPR 0.5288 | S+L+Z AUC 0.8214 AUPR 0.5274 | dZ AUC +0.0086 dZ AUPR -0.0014
+  (for reference, FINAL ep10: dZ AUC +0.0086 dZ AUPR -0.0014)
+
+----  FOLD fold9  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  -0.0009   -0.0000 |  +0.0031   +0.0132 |      0.8081 |   +nan  0.00
+    2 |  +0.0133   +0.0137 |  +0.0076   +0.0124 |      0.8125 |  -1.37  0.03
+    4 |  +0.0076   +0.0066 |  +0.0060   +0.0095 |      0.8110 |  -1.37  0.05
+    6 |  +0.0047   +0.0060 |  +0.0070   +0.0226 |      0.8119 |  -1.37  0.06
+    8 |  +0.0104   +0.0131 |  +0.0045   +0.0126 |      0.8094 |  -1.37  0.07
+   10 |  +0.0095   +0.0090 |  +0.0065   +0.0038 |      0.8114 |  -1.37  0.08 <== stop
+  SELECTED ep10 by final epoch: HOLD-OUT  S+L AUC 0.8049 AUPR 0.5197 | S+L+Z AUC 0.8114 AUPR 0.5235 | dZ AUC +0.0065 dZ AUPR +0.0038
+  (for reference, FINAL ep10: dZ AUC +0.0065 dZ AUPR +0.0038)
+
+
+================  SUMMARY (RLOO scratch, 10-fold on remainder, early-stop on val-none, scored on FROZEN hold-out)  ================
+    unit   ep |  S+L AUC   +Z AUC   dZ_AU |  S+L AUPR  +Z AUPR   dZ_AP | final_dAU
+   fold0   10 |   0.8102   0.8238 +0.0136 |    0.4987   0.5203 +0.0215 |   +0.0136
+   fold1   10 |   0.8134   0.8259 +0.0125 |    0.5370   0.5386 +0.0016 |   +0.0125
+   fold2   10 |   0.8070   0.8192 +0.0121 |    0.5148   0.5249 +0.0101 |   +0.0121
+   fold3   10 |   0.8045   0.8087 +0.0042 |    0.5082   0.4929 -0.0153 |   +0.0042
+   fold4   10 |   0.8151   0.8198 +0.0047 |    0.5206   0.5201 -0.0005 |   +0.0047
+   fold5   10 |   0.8049   0.8179 +0.0130 |    0.5287   0.5720 +0.0434 |   +0.0130
+   fold6   10 |   0.8184   0.8259 +0.0075 |    0.5294   0.5607 +0.0313 |   +0.0075
+   fold7   10 |   0.8061   0.8165 +0.0104 |    0.5206   0.5243 +0.0037 |   +0.0104
+   fold8   10 |   0.8128   0.8214 +0.0086 |    0.5288   0.5274 -0.0014 |   +0.0086
+   fold9   10 |   0.8049   0.8114 +0.0065 |    0.5197   0.5235 +0.0038 |   +0.0065
+
+  At val-selected epoch, across 10 folds:
+    AUC :  S+L 0.8097±0.0047 | S+L+Z 0.8191±0.0054 | dZ +0.0093 wins 10/10
+    AUPR:  S+L 0.5207±0.0107 | S+L+Z 0.5305±0.0211 | dZ +0.0098 wins 7/10
+
+  early-stop vs run-to-end (dZ-AUC): selected +0.0093 | final-epoch +0.0093 | gain +0.0000
+
+  PAIRED TEST  (S+L+Z) vs (S+L)  at val-selected epoch, 10 folds:
+    AUC-ROC        mean dZ +0.0093 | wins 10/10 | paired-t t=+8.448 p=0.0000 | Wilcoxon W=0.0 p=0.0020 | dz=+2.67
+    AUPR           mean dZ +0.0098 | wins 7/10 | paired-t t=+1.784 p=0.1081 | Wilcoxon W=10.0 p=0.0840 | dz=+0.56
+    (dz = Cohen's d for paired diffs; |dz|>0.8 large. n folds is small,
+     so Wilcoxon p floors at ~0.002 for n=10 / ~0.06 for n=5.)
+
+[full-fit base] TRAIN RL on ALL remainder (N=798, no CV, val included) -> score on FROZEN hold-out (N=199)
+
+================  FULL-FIT BASE (all remainder, no CV, RL-trained)  ================
+  fit N=798 (pos 174, rate 0.218) | test N=199 (pos 43, rate 0.216)
+  S+L    :  AUC 0.8105  AUPR 0.5116
+  S+L+Z  :  AUC 0.8193  AUPR 0.5314   (dZ AUC +0.0088  dZ AUPR +0.0198)
+
+
+######## clf=tabpfn lr=1e-4 rl_epochs=10 eval_every=2 ########
+Using device: cuda
+[normalize] input z-scoring = False (applied to ALL classifiers)
+Loading patients... False True
+Loading 2
+From pkl
+<utils.class_patient.Patient object at 0x7f9bebd03310>
+Loaded 1213 patients
+After cleanup: 1206 patients
+[Landmark] L=24h H=48h | excluded 209 pre-landmark AKI | cohort 1206 -> 997 | pos 217 (21.77%)
+AKI positive (horizon): 217 (21.77%)
+[holdout] frac~0.2 seed=12345 N_holdout=199 (pos 43, rate 0.216) | N_remainder=798  FROZEN, never seen in training
+
+----  FOLD fold0  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  -0.0047   +0.0141 |  +0.0104   +0.0287 |      0.8207 |   +nan  0.00
+    2 |  +0.0075   +0.0016 |  +0.0110   +0.0185 |      0.8213 |  -1.41  0.00
+    4 |  +0.0056   -0.0053 |  +0.0139   +0.0226 |      0.8241 |  -1.41  0.00
+    6 |  +0.0047   -0.0046 |  +0.0137   +0.0197 |      0.8239 |  -1.41  0.00
+    8 |  +0.0079   +0.0001 |  +0.0127   +0.0196 |      0.8229 |  -1.41  0.00
+   10 |  +0.0033   -0.0089 |  +0.0103   +0.0151 |      0.8205 |  -1.41  0.00 <== stop
+  SELECTED ep10 by final epoch: HOLD-OUT  S+L AUC 0.8102 AUPR 0.4987 | S+L+Z AUC 0.8205 AUPR 0.5138 | dZ AUC +0.0103 dZ AUPR +0.0151
+  (for reference, FINAL ep10: dZ AUC +0.0103 dZ AUPR +0.0151)
+
+----  FOLD fold1  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  -0.0042   -0.0033 |  +0.0075   +0.0233 |      0.8209 |   +nan  0.00
+    2 |  +0.0163   +0.0568 |  +0.0127   +0.0040 |      0.8260 |  -1.42  0.00
+    4 |  +0.0215   +0.0709 |  +0.0127   +0.0024 |      0.8260 |  -1.42  0.00
+    6 |  +0.0191   +0.0528 |  +0.0118   +0.0026 |      0.8251 |  -1.41  0.00
+    8 |  +0.0205   +0.0603 |  +0.0098   -0.0005 |      0.8231 |  -1.42  0.00
+   10 |  +0.0224   +0.0541 |  +0.0099   -0.0016 |      0.8233 |  -1.42  0.00 <== stop
+  SELECTED ep10 by final epoch: HOLD-OUT  S+L AUC 0.8134 AUPR 0.5370 | S+L+Z AUC 0.8233 AUPR 0.5354 | dZ AUC +0.0099 dZ AUPR -0.0016
+  (for reference, FINAL ep10: dZ AUC +0.0099 dZ AUPR -0.0016)
+
+----  FOLD fold2  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  -0.0051   +0.0039 |  +0.0080   +0.0145 |      0.8150 |   +nan  0.00
+    2 |  -0.0042   +0.0292 |  +0.0119   +0.0088 |      0.8189 |  -1.43  0.00
+    4 |  -0.0023   +0.0325 |  +0.0108   +0.0072 |      0.8178 |  -1.43  0.00
+    6 |  +0.0014   +0.0379 |  +0.0110   +0.0069 |      0.8180 |  -1.42  0.00
+    8 |  +0.0014   +0.0370 |  +0.0125   +0.0085 |      0.8195 |  -1.43  0.00
+   10 |  +0.0023   +0.0419 |  +0.0133   +0.0106 |      0.8204 |  -1.42  0.00 <== stop
+  SELECTED ep10 by final epoch: HOLD-OUT  S+L AUC 0.8070 AUPR 0.5148 | S+L+Z AUC 0.8204 AUPR 0.5255 | dZ AUC +0.0133 dZ AUPR +0.0106
+  (for reference, FINAL ep10: dZ AUC +0.0133 dZ AUPR +0.0106)
+
+----  FOLD fold3  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0000   -0.0083 |  +0.0051   +0.0095 |      0.8096 |   +nan  0.00
+    2 |  +0.0079   +0.0057 |  +0.0100   -0.0108 |      0.8145 |  -1.38  0.00
+    4 |  +0.0051   +0.0071 |  +0.0119   -0.0063 |      0.8163 |  -1.38  0.00
+    6 |  +0.0037   +0.0052 |  +0.0089   -0.0072 |      0.8134 |  -1.38  0.00
+    8 |  +0.0047   +0.0055 |  +0.0084   -0.0100 |      0.8129 |  -1.38  0.00
+   10 |  +0.0000   +0.0011 |  +0.0078   -0.0079 |      0.8123 |  -1.37  0.00 <== stop
+  SELECTED ep10 by final epoch: HOLD-OUT  S+L AUC 0.8045 AUPR 0.5082 | S+L+Z AUC 0.8123 AUPR 0.5004 | dZ AUC +0.0078 dZ AUPR -0.0079
+  (for reference, FINAL ep10: dZ AUC +0.0078 dZ AUPR -0.0079)
+
+----  FOLD fold4  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0045   +0.0024 |  +0.0039   +0.0150 |      0.8190 |   +nan  0.00
+    2 |  +0.0072   -0.0059 |  +0.0066   +0.0006 |      0.8218 |  -1.44  0.00
+    4 |  +0.0081   -0.0061 |  +0.0057   +0.0018 |      0.8209 |  -1.44  0.00
+    6 |  +0.0063   +0.0014 |  +0.0082   +0.0062 |      0.8233 |  -1.44  0.01
+    8 |  +0.0045   -0.0075 |  +0.0058   +0.0004 |      0.8210 |  -1.44  0.01
+   10 |  +0.0045   -0.0104 |  +0.0060   -0.0020 |      0.8211 |  -1.44  0.01 <== stop
+  SELECTED ep10 by final epoch: HOLD-OUT  S+L AUC 0.8151 AUPR 0.5206 | S+L+Z AUC 0.8211 AUPR 0.5186 | dZ AUC +0.0060 dZ AUPR -0.0020
+  (for reference, FINAL ep10: dZ AUC +0.0060 dZ AUPR -0.0020)
+
+----  FOLD fold5  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  -0.0081   -0.0047 |  +0.0081   +0.0269 |      0.8130 |   +nan  0.00
+    2 |  +0.0197   +0.0526 |  +0.0107   +0.0166 |      0.8157 |  -1.44  0.00
+    4 |  +0.0224   +0.0609 |  +0.0090   +0.0108 |      0.8140 |  -1.43  0.00
+    6 |  +0.0206   +0.0559 |  +0.0093   +0.0071 |      0.8143 |  -1.43  0.00
+    8 |  +0.0179   +0.0495 |  +0.0094   +0.0065 |      0.8143 |  -1.44  0.00
+   10 |  +0.0161   +0.0455 |  +0.0085   +0.0126 |      0.8134 |  -1.43  0.00 <== stop
+  SELECTED ep10 by final epoch: HOLD-OUT  S+L AUC 0.8049 AUPR 0.5287 | S+L+Z AUC 0.8134 AUPR 0.5412 | dZ AUC +0.0085 dZ AUPR +0.0126
+  (for reference, FINAL ep10: dZ AUC +0.0085 dZ AUPR +0.0126)
+
+----  FOLD fold6  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  -0.0018   -0.0048 |  +0.0067   +0.0151 |      0.8251 |   +nan  0.00
+    2 |  +0.0327   +0.0356 |  +0.0056   +0.0124 |      0.8239 |  -1.43  0.00
+    4 |  +0.0296   +0.0230 |  +0.0077   +0.0215 |      0.8260 |  -1.43  0.00
+    6 |  +0.0296   +0.0230 |  +0.0069   +0.0115 |      0.8253 |  -1.43  0.00
+    8 |  +0.0287   +0.0222 |  +0.0068   +0.0303 |      0.8251 |  -1.43  0.00
+   10 |  +0.0296   +0.0333 |  +0.0061   +0.0261 |      0.8245 |  -1.43  0.00 <== stop
+  SELECTED ep10 by final epoch: HOLD-OUT  S+L AUC 0.8184 AUPR 0.5294 | S+L+Z AUC 0.8245 AUPR 0.5555 | dZ AUC +0.0061 dZ AUPR +0.0261
+  (for reference, FINAL ep10: dZ AUC +0.0061 dZ AUPR +0.0261)
+
+----  FOLD fold7  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  -0.0009   -0.0096 |  +0.0053   +0.0200 |      0.8113 |   +nan  0.00
+    2 |  +0.0054   +0.0140 |  +0.0082   -0.0124 |      0.8143 |  -1.41  0.00
+    4 |  +0.0027   +0.0092 |  +0.0089   -0.0059 |      0.8150 |  -1.41  0.00
+    6 |  +0.0009   +0.0067 |  +0.0098   -0.0009 |      0.8159 |  -1.42  0.00
+    8 |  +0.0009   +0.0054 |  +0.0098   -0.0001 |      0.8159 |  -1.41  0.00
+   10 |  +0.0000   +0.0057 |  +0.0105   +0.0092 |      0.8166 |  -1.41  0.00 <== stop
+  SELECTED ep10 by final epoch: HOLD-OUT  S+L AUC 0.8061 AUPR 0.5206 | S+L+Z AUC 0.8166 AUPR 0.5298 | dZ AUC +0.0105 dZ AUPR +0.0092
+  (for reference, FINAL ep10: dZ AUC +0.0105 dZ AUPR +0.0092)
+
+----  FOLD fold8  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0047   +0.0330 |  +0.0063   +0.0025 |      0.8190 |   +nan  0.00
+    2 |  +0.0038   +0.0095 |  +0.0115   +0.0050 |      0.8242 |  -1.43  0.00
+    4 |  +0.0038   +0.0113 |  +0.0124   +0.0086 |      0.8251 |  -1.42  0.00
+    6 |  -0.0005   -0.0044 |  +0.0109   +0.0089 |      0.8236 |  -1.42  0.00
+    8 |  -0.0019   -0.0148 |  +0.0108   +0.0030 |      0.8236 |  -1.43  0.00
+   10 |  -0.0019   -0.0094 |  +0.0121   +0.0060 |      0.8248 |  -1.42  0.00 <== stop
+  SELECTED ep10 by final epoch: HOLD-OUT  S+L AUC 0.8128 AUPR 0.5288 | S+L+Z AUC 0.8248 AUPR 0.5348 | dZ AUC +0.0121 dZ AUPR +0.0060
+  (for reference, FINAL ep10: dZ AUC +0.0121 dZ AUPR +0.0060)
+
+----  FOLD fold9  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  -0.0009   -0.0000 |  +0.0031   +0.0132 |      0.8081 |   +nan  0.00
+    2 |  +0.0123   +0.0127 |  +0.0073   +0.0095 |      0.8122 |  -1.37  0.00
+    4 |  +0.0161   +0.0160 |  +0.0063   +0.0113 |      0.8113 |  -1.37  0.00
+    6 |  +0.0019   +0.0045 |  +0.0051   +0.0207 |      0.8100 |  -1.37  0.01
+    8 |  +0.0095   +0.0118 |  +0.0077   +0.0223 |      0.8126 |  -1.37  0.01
+   10 |  +0.0066   +0.0088 |  +0.0075   +0.0187 |      0.8125 |  -1.37  0.01 <== stop
+  SELECTED ep10 by final epoch: HOLD-OUT  S+L AUC 0.8049 AUPR 0.5197 | S+L+Z AUC 0.8125 AUPR 0.5384 | dZ AUC +0.0075 dZ AUPR +0.0187
+  (for reference, FINAL ep10: dZ AUC +0.0075 dZ AUPR +0.0187)
+
+
+================  SUMMARY (RLOO scratch, 10-fold on remainder, early-stop on val-none, scored on FROZEN hold-out)  ================
+    unit   ep |  S+L AUC   +Z AUC   dZ_AU |  S+L AUPR  +Z AUPR   dZ_AP | final_dAU
+   fold0   10 |   0.8102   0.8205 +0.0103 |    0.4987   0.5138 +0.0151 |   +0.0103
+   fold1   10 |   0.8134   0.8233 +0.0099 |    0.5370   0.5354 -0.0016 |   +0.0099
+   fold2   10 |   0.8070   0.8204 +0.0133 |    0.5148   0.5255 +0.0106 |   +0.0133
+   fold3   10 |   0.8045   0.8123 +0.0078 |    0.5082   0.5004 -0.0079 |   +0.0078
+   fold4   10 |   0.8151   0.8211 +0.0060 |    0.5206   0.5186 -0.0020 |   +0.0060
+   fold5   10 |   0.8049   0.8134 +0.0085 |    0.5287   0.5412 +0.0126 |   +0.0085
+   fold6   10 |   0.8184   0.8245 +0.0061 |    0.5294   0.5555 +0.0261 |   +0.0061
+   fold7   10 |   0.8061   0.8166 +0.0105 |    0.5206   0.5298 +0.0092 |   +0.0105
+   fold8   10 |   0.8128   0.8248 +0.0121 |    0.5288   0.5348 +0.0060 |   +0.0121
+   fold9   10 |   0.8049   0.8125 +0.0075 |    0.5197   0.5384 +0.0187 |   +0.0075
+
+  At val-selected epoch, across 10 folds:
+    AUC :  S+L 0.8097±0.0047 | S+L+Z 0.8189±0.0046 | dZ +0.0092 wins 10/10
+    AUPR:  S+L 0.5207±0.0107 | S+L+Z 0.5293±0.0148 | dZ +0.0087 wins 7/10
+
+  early-stop vs run-to-end (dZ-AUC): selected +0.0092 | final-epoch +0.0092 | gain +0.0000
+
+  PAIRED TEST  (S+L+Z) vs (S+L)  at val-selected epoch, 10 folds:
+    AUC-ROC        mean dZ +0.0092 | wins 10/10 | paired-t t=+11.882 p=0.0000 | Wilcoxon W=0.0 p=0.0020 | dz=+3.76
+    AUPR           mean dZ +0.0087 | wins 7/10 | paired-t t=+2.650 p=0.0265 | Wilcoxon W=7.0 p=0.0371 | dz=+0.84
+    (dz = Cohen's d for paired diffs; |dz|>0.8 large. n folds is small,
+     so Wilcoxon p floors at ~0.002 for n=10 / ~0.06 for n=5.)
+
+[full-fit base] TRAIN RL on ALL remainder (N=798, no CV, val included) -> score on FROZEN hold-out (N=199)
+
+================  FULL-FIT BASE (all remainder, no CV, RL-trained)  ================
+  fit N=798 (pos 174, rate 0.218) | test N=199 (pos 43, rate 0.216)
+  S+L    :  AUC 0.8105  AUPR 0.5116
+  S+L+Z  :  AUC 0.8186  AUPR 0.5167   (dZ AUC +0.0081  dZ AUPR +0.0051)
+
+
+######## clf=xgb lr=1e-2 rl_epochs=40 eval_every=4 ########
+Using device: cuda
+[normalize] input z-scoring = False (applied to ALL classifiers)
+Loading patients... False True
+Loading 2
+From pkl
+<utils.class_patient.Patient object at 0x7f548fd47310>
+Loaded 1213 patients
+After cleanup: 1206 patients
+[Landmark] L=24h H=48h | excluded 209 pre-landmark AKI | cohort 1206 -> 997 | pos 217 (21.77%)
+AKI positive (horizon): 217 (21.77%)
+[holdout] frac~0.2 seed=12345 N_holdout=199 (pos 43, rate 0.216) | N_remainder=798  FROZEN, never seen in training
+
+----  FOLD fold0  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0140   +0.0331 |  +0.0177   +0.0228 |      0.8113 |   +nan  0.00
+    4 |  +0.0523   +0.1499 |  +0.0267   +0.0451 |      0.8202 |  -1.42  0.44
+    8 |  +0.0420   +0.0840 |  +0.0356   +0.0570 |      0.8292 |  -1.41  1.93
+   12 |  +0.0131   +0.0263 |  +0.0207   +0.0725 |      0.8143 |  -1.45  3.89
+   16 |  -0.0056   +0.0350 |  +0.0098   +0.0706 |      0.8034 |  -1.37  5.19
+   20 |  +0.0289   +0.0214 |  +0.0136   +0.0474 |      0.8071 |  -1.36  7.07
+   24 |  +0.0149   +0.0183 |  +0.0094   +0.0713 |      0.8029 |  -1.34  9.89
+   28 |  +0.0588   +0.0465 |  +0.0192   +0.0438 |      0.8128 |  -1.34 12.27
+   32 |  +0.0448   +0.0363 |  +0.0183   +0.0624 |      0.8119 |  -1.37 13.87
+   36 |  +0.0514   +0.0172 |  +0.0188   +0.0588 |      0.8123 |  -1.39 15.20
+   40 |  +0.0280   +0.0032 |  +0.0242   +0.0371 |      0.8177 |  -1.31 16.93 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.7935 AUPR 0.4832 | S+L+Z AUC 0.8177 AUPR 0.5203 | dZ AUC +0.0242 dZ AUPR +0.0371
+  (for reference, FINAL ep40: dZ AUC +0.0242 dZ AUPR +0.0371)
+
+----  FOLD fold1  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  -0.0112   -0.0212 |  +0.0030   -0.0193 |      0.8242 |   +nan  0.00
+    4 |  +0.0112   +0.0650 |  +0.0060   -0.0609 |      0.8272 |  -1.42  0.42
+    8 |  -0.0093   +0.0005 |  +0.0025   -0.0475 |      0.8238 |  -1.39  1.79
+   12 |  -0.0280   -0.0712 |  +0.0060   +0.0183 |      0.8272 |  -1.36  3.59
+   16 |  -0.0159   -0.0366 |  +0.0086   +0.0114 |      0.8299 |  -1.41  7.12
+   20 |  -0.0159   +0.0110 |  +0.0097   -0.0460 |      0.8309 |  -1.42 11.25
+   24 |  -0.0514   -0.1188 |  +0.0064   -0.0331 |      0.8277 |  -1.40 12.40
+   28 |  -0.0383   -0.0970 |  +0.0086   +0.0054 |      0.8299 |  -1.34 14.00
+   32 |  -0.0149   -0.0648 |  +0.0066   -0.0064 |      0.8278 |  -1.38 15.55
+   36 |  -0.0112   -0.0101 |  +0.0089   +0.0151 |      0.8302 |  -1.37 16.12
+   40 |  -0.0224   -0.0640 |  +0.0170   +0.0097 |      0.8383 |  -1.31 17.39 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8213 AUPR 0.5863 | S+L+Z AUC 0.8383 AUPR 0.5960 | dZ AUC +0.0170 dZ AUPR +0.0097
+  (for reference, FINAL ep40: dZ AUC +0.0170 dZ AUPR +0.0097)
+
+----  FOLD fold2  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  -0.0187   -0.0337 |  +0.0010   -0.0127 |      0.8140 |   +nan  0.00
+    4 |  -0.0159   -0.0658 |  +0.0027   -0.0264 |      0.8156 |  -1.45  0.52
+    8 |  +0.0261   -0.0030 |  +0.0109   -0.0013 |      0.8238 |  -1.41  1.74
+   12 |  -0.0028   -0.0252 |  +0.0157   +0.0347 |      0.8286 |  -1.41  4.56
+   16 |  +0.0168   +0.0790 |  +0.0177   -0.0180 |      0.8306 |  -1.41  8.23
+   20 |  +0.0112   +0.0038 |  +0.0270   +0.0303 |      0.8399 |  -1.37 10.45
+   24 |  +0.0047   -0.0100 |  +0.0246   -0.0070 |      0.8375 |  -1.37 12.36
+   28 |  -0.0009   +0.0294 |  +0.0183   +0.0232 |      0.8312 |  -1.36 14.72
+   32 |  -0.0084   -0.0117 |  +0.0119   +0.0153 |      0.8248 |  -1.34 16.20
+   36 |  +0.0317   +0.0194 |  +0.0194   +0.0201 |      0.8323 |  -1.37 17.61
+   40 |  +0.0149   -0.0110 |  +0.0060   +0.0037 |      0.8189 |  -1.34 19.80 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8129 AUPR 0.5573 | S+L+Z AUC 0.8189 AUPR 0.5610 | dZ AUC +0.0060 dZ AUPR +0.0037
+  (for reference, FINAL ep40: dZ AUC +0.0060 dZ AUPR +0.0037)
+
+----  FOLD fold3  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  -0.0140   -0.0067 |  -0.0015   +0.0163 |      0.8148 |   +nan  0.00
+    4 |  +0.0187   +0.0762 |  -0.0078   +0.0016 |      0.8086 |  -1.40  0.34
+    8 |  +0.0028   +0.0582 |  -0.0091   -0.0014 |      0.8072 |  -1.39  1.35
+   12 |  -0.0504   +0.0062 |  -0.0195   -0.0005 |      0.7968 |  -1.35  3.35
+   16 |  -0.0289   -0.0008 |  -0.0046   +0.0222 |      0.8117 |  -1.37  6.16
+   20 |  -0.0187   +0.0341 |  -0.0039   +0.0032 |      0.8125 |  -1.31  9.61
+   24 |  -0.0224   +0.0139 |  +0.0070   +0.0300 |      0.8233 |  -1.30 12.57
+   28 |  -0.0009   +0.0276 |  +0.0200   +0.0390 |      0.8363 |  -1.36 15.15
+   32 |  +0.0140   +0.0439 |  +0.0176   +0.0482 |      0.8339 |  -1.39 16.85
+   36 |  -0.0131   +0.0890 |  +0.0092   +0.0578 |      0.8256 |  -1.33 20.07
+   40 |  +0.0140   +0.0789 |  +0.0078   +0.0640 |      0.8241 |  -1.32 22.04 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8163 AUPR 0.5392 | S+L+Z AUC 0.8241 AUPR 0.6031 | dZ AUC +0.0078 dZ AUPR +0.0640
+  (for reference, FINAL ep40: dZ AUC +0.0078 dZ AUPR +0.0640)
+
+----  FOLD fold4  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0090   +0.0376 |  +0.0000   +0.0272 |      0.8132 |   +nan  0.00
+    4 |  +0.0009   +0.0895 |  +0.0230   +0.0347 |      0.8362 |  -1.46  0.65
+    8 |  -0.0018   +0.0837 |  +0.0185   +0.0047 |      0.8317 |  -1.45  2.94
+   12 |  +0.0036   +0.1145 |  +0.0076   +0.0441 |      0.8208 |  -1.41  3.92
+   16 |  +0.0072   +0.0844 |  +0.0042   +0.0063 |      0.8174 |  -1.42  6.70
+   20 |  +0.0242   +0.0851 |  -0.0051   +0.0060 |      0.8081 |  -1.37  9.43
+   24 |  +0.0233   +0.0640 |  -0.0086   +0.0034 |      0.8046 |  -1.40 12.15
+   28 |  +0.0134   +0.0658 |  +0.0256   +0.0802 |      0.8388 |  -1.37 15.26
+   32 |  +0.0054   +0.0541 |  +0.0022   +0.0259 |      0.8154 |  -1.35 18.10
+   36 |  +0.0090   +0.0382 |  +0.0200   +0.0671 |      0.8332 |  -1.40 20.16
+   40 |  +0.0081   +0.0564 |  +0.0304   +0.0900 |      0.8436 |  -1.43 20.95 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8132 AUPR 0.5211 | S+L+Z AUC 0.8436 AUPR 0.6111 | dZ AUC +0.0304 dZ AUPR +0.0900
+  (for reference, FINAL ep40: dZ AUC +0.0304 dZ AUPR +0.0900)
+
+----  FOLD fold5  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0027   +0.0175 |  -0.0131   -0.0199 |      0.7986 |   +nan  0.00
+    4 |  +0.0332   +0.0561 |  +0.0083   +0.0075 |      0.8201 |  -1.43  0.55
+    8 |  +0.0591   +0.1327 |  +0.0081   +0.0216 |      0.8198 |  -1.45  1.80
+   12 |  +0.0412   +0.1089 |  -0.0040   +0.0179 |      0.8077 |  -1.39  3.66
+   16 |  +0.0502   +0.0926 |  -0.0054   +0.0231 |      0.8064 |  -1.38  5.88
+   20 |  +0.0224   +0.0400 |  +0.0154   +0.0224 |      0.8271 |  -1.41  8.33
+   24 |  +0.0376   +0.0476 |  +0.0376   +0.0461 |      0.8493 |  -1.40 10.28
+   28 |  +0.0287   +0.1159 |  +0.0072   +0.0212 |      0.8189 |  -1.40 12.01
+   32 |  +0.0394   +0.1091 |  +0.0089   +0.0206 |      0.8207 |  -1.38 14.24
+   36 |  +0.0565   +0.1187 |  +0.0054   +0.0113 |      0.8171 |  -1.40 16.17
+   40 |  +0.0663   +0.1081 |  +0.0157   +0.0509 |      0.8274 |  -1.37 16.67 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8117 AUPR 0.5405 | S+L+Z AUC 0.8274 AUPR 0.5913 | dZ AUC +0.0157 dZ AUPR +0.0509
+  (for reference, FINAL ep40: dZ AUC +0.0157 dZ AUPR +0.0509)
+
+----  FOLD fold6  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0108   +0.0115 |  +0.0127   +0.0545 |      0.8324 |   +nan  0.00
+    4 |  -0.0027   -0.0090 |  +0.0212   +0.0708 |      0.8409 |  -1.41  0.49
+    8 |  +0.0125   +0.1039 |  +0.0307   +0.0827 |      0.8505 |  -1.39  2.36
+   12 |  +0.0242   +0.0420 |  +0.0089   +0.0264 |      0.8287 |  -1.38  3.52
+   16 |  +0.0197   +0.0387 |  +0.0009   +0.0203 |      0.8207 |  -1.43  6.77
+   20 |  +0.0134   +0.0105 |  +0.0094   +0.0082 |      0.8292 |  -1.40  8.33
+   24 |  -0.0385   -0.0700 |  +0.0255   +0.0202 |      0.8453 |  -1.37 10.70
+   28 |  +0.0072   +0.0284 |  +0.0046   -0.0053 |      0.8244 |  -1.39 10.98
+   32 |  -0.0009   +0.0024 |  +0.0291   +0.0847 |      0.8488 |  -1.37 13.22
+   36 |  +0.0349   +0.0611 |  +0.0106   +0.0274 |      0.8304 |  -1.36 11.31
+   40 |  +0.0341   +0.0476 |  +0.0280   +0.0671 |      0.8478 |  -1.35 12.08 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8198 AUPR 0.5000 | S+L+Z AUC 0.8478 AUPR 0.5671 | dZ AUC +0.0280 dZ AUPR +0.0671
+  (for reference, FINAL ep40: dZ AUC +0.0280 dZ AUPR +0.0671)
+
+----  FOLD fold7  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0090   +0.0076 |  -0.0045   -0.0177 |      0.8181 |   +nan  0.00
+    4 |  +0.0591   +0.1602 |  -0.0250   -0.0978 |      0.7976 |  -1.45  0.30
+    8 |  +0.0108   +0.0357 |  +0.0025   +0.0255 |      0.8251 |  -1.42  1.49
+   12 |  +0.0179   +0.0181 |  -0.0048   +0.0222 |      0.8178 |  -1.43  2.97
+   16 |  +0.0260   +0.0226 |  -0.0049   +0.0220 |      0.8177 |  -1.39  5.87
+   20 |  -0.0081   +0.0022 |  +0.0054   +0.0271 |      0.8280 |  -1.34  9.66
+   24 |  +0.0358   +0.0856 |  -0.0010   -0.0228 |      0.8216 |  -1.37 12.38
+   28 |  -0.0224   -0.0591 |  +0.0104   -0.0203 |      0.8330 |  -1.37 13.47
+   32 |  -0.0108   -0.0457 |  +0.0055   +0.0057 |      0.8281 |  -1.34 14.81
+   36 |  -0.0206   +0.0168 |  +0.0106   +0.0389 |      0.8332 |  -1.38 16.68
+   40 |  -0.0269   -0.0194 |  +0.0137   +0.0494 |      0.8363 |  -1.35 16.96 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8226 AUPR 0.5617 | S+L+Z AUC 0.8363 AUPR 0.6111 | dZ AUC +0.0137 dZ AUPR +0.0494
+  (for reference, FINAL ep40: dZ AUC +0.0137 dZ AUPR +0.0494)
+
+----  FOLD fold8  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0218   +0.0230 |  -0.0034   +0.0072 |      0.8208 |   +nan  0.00
+    4 |  +0.0474   +0.0315 |  -0.0122   -0.0688 |      0.8120 |  -1.40  0.62
+    8 |  +0.0389   +0.0527 |  -0.0073   -0.0241 |      0.8169 |  -1.43  2.23
+   12 |  +0.0209   +0.0174 |  -0.0103   +0.0171 |      0.8140 |  -1.40  5.13
+   16 |  +0.0171   +0.0165 |  +0.0045   +0.0164 |      0.8287 |  -1.29  8.00
+   20 |  +0.0152   +0.0364 |  +0.0015   +0.0104 |      0.8257 |  -1.37 10.56
+   24 |  +0.0275   +0.0091 |  -0.0185   -0.0593 |      0.8058 |  -1.35 12.42
+   28 |  +0.0389   +0.0442 |  -0.0058   -0.0300 |      0.8184 |  -1.38 13.92
+   32 |  +0.0351   +0.0288 |  -0.0128   -0.0280 |      0.8114 |  -1.30 14.49
+   36 |  +0.0057   -0.0066 |  -0.0043   -0.0178 |      0.8199 |  -1.38 15.76
+   40 |  +0.0256   +0.0070 |  +0.0104   +0.0260 |      0.8347 |  -1.34 17.36 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8242 AUPR 0.5662 | S+L+Z AUC 0.8347 AUPR 0.5923 | dZ AUC +0.0104 dZ AUPR +0.0260
+  (for reference, FINAL ep40: dZ AUC +0.0104 dZ AUPR +0.0260)
+
+----  FOLD fold9  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  -0.0304   -0.0006 |  -0.0064   +0.0074 |      0.8092 |   +nan  0.00
+    4 |  +0.0190   +0.0066 |  +0.0004   +0.0256 |      0.8160 |  -1.42  0.47
+    8 |  +0.0351   +0.0514 |  +0.0119   +0.0256 |      0.8275 |  -1.36  1.70
+   12 |  +0.0057   -0.0037 |  +0.0082   +0.0349 |      0.8238 |  -1.36  2.84
+   16 |  -0.0047   -0.0090 |  +0.0051   +0.0185 |      0.8207 |  -1.33  5.08
+   20 |  -0.0256   -0.0081 |  -0.0004   +0.0338 |      0.8151 |  -1.37  7.47
+   24 |  -0.0085   +0.0024 |  +0.0064   -0.0074 |      0.8220 |  -1.32 10.84
+   28 |  -0.0209   -0.0392 |  +0.0143   +0.0025 |      0.8299 |  -1.35 13.83
+   32 |  -0.0038   -0.0054 |  +0.0076   +0.0146 |      0.8232 |  -1.37 15.58
+   36 |  -0.0085   -0.0037 |  +0.0070   -0.0161 |      0.8226 |  -1.31 17.60
+   40 |  +0.0019   -0.0235 |  +0.0019   -0.0270 |      0.8175 |  -1.32 19.77 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8156 AUPR 0.5387 | S+L+Z AUC 0.8175 AUPR 0.5118 | dZ AUC +0.0019 dZ AUPR -0.0270
+  (for reference, FINAL ep40: dZ AUC +0.0019 dZ AUPR -0.0270)
+
+
+================  SUMMARY (RLOO scratch, 10-fold on remainder, early-stop on val-none, scored on FROZEN hold-out)  ================
+    unit   ep |  S+L AUC   +Z AUC   dZ_AU |  S+L AUPR  +Z AUPR   dZ_AP | final_dAU
+   fold0   40 |   0.7935   0.8177 +0.0242 |    0.4832   0.5203 +0.0371 |   +0.0242
+   fold1   40 |   0.8213   0.8383 +0.0170 |    0.5863   0.5960 +0.0097 |   +0.0170
+   fold2   40 |   0.8129   0.8189 +0.0060 |    0.5573   0.5610 +0.0037 |   +0.0060
+   fold3   40 |   0.8163   0.8241 +0.0078 |    0.5392   0.6031 +0.0640 |   +0.0078
+   fold4   40 |   0.8132   0.8436 +0.0304 |    0.5211   0.6111 +0.0900 |   +0.0304
+   fold5   40 |   0.8117   0.8274 +0.0157 |    0.5405   0.5913 +0.0509 |   +0.0157
+   fold6   40 |   0.8198   0.8478 +0.0280 |    0.5000   0.5671 +0.0671 |   +0.0280
+   fold7   40 |   0.8226   0.8363 +0.0137 |    0.5617   0.6111 +0.0494 |   +0.0137
+   fold8   40 |   0.8242   0.8347 +0.0104 |    0.5662   0.5923 +0.0260 |   +0.0104
+   fold9   40 |   0.8156   0.8175 +0.0019 |    0.5387   0.5118 -0.0270 |   +0.0019
+
+  At val-selected epoch, across 10 folds:
+    AUC :  S+L 0.8151±0.0083 | S+L+Z 0.8306±0.0105 | dZ +0.0155 wins 10/10
+    AUPR:  S+L 0.5394±0.0296 | S+L+Z 0.5765±0.0341 | dZ +0.0371 wins 9/10
+
+  early-stop vs run-to-end (dZ-AUC): selected +0.0155 | final-epoch +0.0155 | gain +0.0000
+
+  PAIRED TEST  (S+L+Z) vs (S+L)  at val-selected epoch, 10 folds:
+    AUC-ROC        mean dZ +0.0155 | wins 10/10 | paired-t t=+5.136 p=0.0006 | Wilcoxon W=0.0 p=0.0020 | dz=+1.62
+    AUPR           mean dZ +0.0371 | wins 9/10 | paired-t t=+3.378 p=0.0082 | Wilcoxon W=4.0 p=0.0137 | dz=+1.07
+    (dz = Cohen's d for paired diffs; |dz|>0.8 large. n folds is small,
+     so Wilcoxon p floors at ~0.002 for n=10 / ~0.06 for n=5.)
+
+[full-fit base] TRAIN RL on ALL remainder (N=798, no CV, val included) -> score on FROZEN hold-out (N=199)
+
+================  FULL-FIT BASE (all remainder, no CV, RL-trained)  ================
+  fit N=798 (pos 174, rate 0.218) | test N=199 (pos 43, rate 0.216)
+  S+L    :  AUC 0.8229  AUPR 0.5596
+  S+L+Z  :  AUC 0.8242  AUPR 0.6041   (dZ AUC +0.0013  dZ AUPR +0.0445)
+
+
+######## clf=xgb lr=1e-3 rl_epochs=40 eval_every=4 ########
+Using device: cuda
+[normalize] input z-scoring = False (applied to ALL classifiers)
+Loading patients... False True
+Loading 2
+From pkl
+<utils.class_patient.Patient object at 0x7f09b40ff340>
+Loaded 1213 patients
+After cleanup: 1206 patients
+[Landmark] L=24h H=48h | excluded 209 pre-landmark AKI | cohort 1206 -> 997 | pos 217 (21.77%)
+AKI positive (horizon): 217 (21.77%)
+[holdout] frac~0.2 seed=12345 N_holdout=199 (pos 43, rate 0.216) | N_remainder=798  FROZEN, never seen in training
+
+----  FOLD fold0  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0140   +0.0331 |  +0.0177   +0.0228 |      0.8113 |   +nan  0.00
+    4 |  +0.0430   +0.1252 |  +0.0201   +0.0456 |      0.8137 |  -1.40  0.02
+    8 |  +0.0626   +0.1738 |  +0.0271   +0.0792 |      0.8207 |  -1.41  0.03
+   12 |  +0.0486   +0.1379 |  +0.0192   +0.0402 |      0.8128 |  -1.45  0.05
+   16 |  +0.0467   +0.2017 |  +0.0228   +0.0711 |      0.8163 |  -1.39  0.06
+   20 |  +0.0355   +0.1180 |  +0.0246   +0.0368 |      0.8181 |  -1.39  0.08
+   24 |  +0.0616   +0.1760 |  +0.0307   +0.0799 |      0.8242 |  -1.39  0.11
+   28 |  +0.0448   +0.0944 |  +0.0294   +0.0696 |      0.8229 |  -1.40  0.15
+   32 |  +0.0672   +0.1504 |  +0.0270   +0.0799 |      0.8205 |  -1.46  0.23
+   36 |  +0.0747   +0.1507 |  +0.0367   +0.0589 |      0.8302 |  -1.45  0.33
+   40 |  +0.0486   +0.1358 |  +0.0250   +0.0311 |      0.8186 |  -1.42  0.47 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.7935 AUPR 0.4832 | S+L+Z AUC 0.8186 AUPR 0.5143 | dZ AUC +0.0250 dZ AUPR +0.0311
+  (for reference, FINAL ep40: dZ AUC +0.0250 dZ AUPR +0.0311)
+
+----  FOLD fold1  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  -0.0112   -0.0212 |  +0.0030   -0.0193 |      0.8242 |   +nan  0.00
+    4 |  -0.0131   +0.0183 |  -0.0075   -0.0404 |      0.8138 |  -1.41  0.02
+    8 |  -0.0168   -0.0547 |  +0.0091   -0.0477 |      0.8304 |  -1.39  0.03
+   12 |  +0.0028   +0.0065 |  +0.0146   -0.0027 |      0.8359 |  -1.42  0.04
+   16 |  +0.0019   +0.0436 |  +0.0115   -0.0609 |      0.8327 |  -1.39  0.05
+   20 |  +0.0177   +0.0777 |  +0.0098   -0.0470 |      0.8311 |  -1.43  0.06
+   24 |  +0.0037   +0.0105 |  +0.0216   -0.0030 |      0.8429 |  -1.42  0.07
+   28 |  +0.0243   +0.1298 |  +0.0034   -0.0627 |      0.8247 |  -1.39  0.10
+   32 |  +0.0047   -0.0408 |  +0.0148   -0.0261 |      0.8360 |  -1.42  0.13
+   36 |  +0.0196   +0.0450 |  +0.0222   -0.0130 |      0.8435 |  -1.46  0.20
+   40 |  +0.0037   +0.0170 |  +0.0143   -0.0138 |      0.8356 |  -1.41  0.28 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8213 AUPR 0.5863 | S+L+Z AUC 0.8356 AUPR 0.5725 | dZ AUC +0.0143 dZ AUPR -0.0138
+  (for reference, FINAL ep40: dZ AUC +0.0143 dZ AUPR -0.0138)
+
+----  FOLD fold2  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  -0.0187   -0.0337 |  +0.0010   -0.0127 |      0.8140 |   +nan  0.00
+    4 |  -0.0037   -0.0360 |  -0.0018   -0.0176 |      0.8111 |  -1.46  0.02
+    8 |  -0.0364   -0.1321 |  -0.0145   -0.0870 |      0.7984 |  -1.41  0.04
+   12 |  -0.0233   -0.0764 |  -0.0042   -0.0225 |      0.8087 |  -1.45  0.05
+   16 |  -0.0177   -0.1012 |  -0.0160   -0.0491 |      0.7970 |  -1.44  0.07
+   20 |  -0.0075   -0.0382 |  -0.0168   -0.0886 |      0.7961 |  -1.44  0.09
+   24 |  -0.0177   -0.0756 |  +0.0054   -0.0243 |      0.8183 |  -1.42  0.12
+   28 |  -0.0196   -0.0645 |  -0.0015   -0.0398 |      0.8114 |  -1.40  0.16
+   32 |  -0.0131   -0.0845 |  +0.0024   -0.0141 |      0.8153 |  -1.46  0.22
+   36 |  -0.0177   -0.0596 |  -0.0025   -0.0363 |      0.8104 |  -1.45  0.31
+   40 |  +0.0009   -0.0035 |  -0.0118   -0.0704 |      0.8011 |  -1.41  0.41 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8129 AUPR 0.5573 | S+L+Z AUC 0.8011 AUPR 0.4869 | dZ AUC -0.0118 dZ AUPR -0.0704
+  (for reference, FINAL ep40: dZ AUC -0.0118 dZ AUPR -0.0704)
+
+----  FOLD fold3  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  -0.0140   -0.0067 |  -0.0015   +0.0163 |      0.8148 |   +nan  0.00
+    4 |  -0.0205   +0.0183 |  +0.0060   +0.0046 |      0.8223 |  -1.38  0.02
+    8 |  +0.0121   +0.1323 |  -0.0004   +0.0008 |      0.8159 |  -1.39  0.03
+   12 |  -0.0149   +0.0403 |  -0.0176   -0.0030 |      0.7987 |  -1.38  0.04
+   16 |  -0.0065   +0.0512 |  -0.0234   +0.0084 |      0.7929 |  -1.43  0.06
+   20 |  +0.0112   +0.0618 |  -0.0171   -0.0298 |      0.7992 |  -1.40  0.07
+   24 |  -0.0196   +0.0675 |  +0.0022   +0.0225 |      0.8186 |  -1.38  0.09
+   28 |  -0.0047   +0.0461 |  -0.0115   -0.0292 |      0.8049 |  -1.41  0.11
+   32 |  -0.0215   +0.0514 |  -0.0133   -0.0008 |      0.8031 |  -1.43  0.14
+   36 |  +0.0084   +0.1278 |  -0.0104   +0.0272 |      0.8059 |  -1.40  0.18
+   40 |  -0.0112   +0.0517 |  +0.0098   +0.0413 |      0.8262 |  -1.38  0.24 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8163 AUPR 0.5392 | S+L+Z AUC 0.8262 AUPR 0.5805 | dZ AUC +0.0098 dZ AUPR +0.0413
+  (for reference, FINAL ep40: dZ AUC +0.0098 dZ AUPR +0.0413)
+
+----  FOLD fold4  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0090   +0.0376 |  +0.0000   +0.0272 |      0.8132 |   +nan  0.00
+    4 |  +0.0125   +0.1315 |  +0.0207   +0.0177 |      0.8339 |  -1.47  0.04
+    8 |  +0.0296   +0.1639 |  -0.0036   -0.0576 |      0.8096 |  -1.47  0.06
+   12 |  +0.0403   +0.1907 |  +0.0276   +0.0298 |      0.8408 |  -1.42  0.08
+   16 |  +0.0161   +0.1481 |  +0.0213   +0.0045 |      0.8345 |  -1.43  0.09
+   20 |  +0.0090   +0.1539 |  +0.0309   +0.0012 |      0.8441 |  -1.43  0.12
+   24 |  -0.0027   +0.1236 |  +0.0280   +0.0258 |      0.8412 |  -1.43  0.15
+   28 |  +0.0027   +0.1196 |  +0.0253   -0.0074 |      0.8386 |  -1.49  0.20
+   32 |  +0.0143   +0.0721 |  +0.0067   +0.0321 |      0.8199 |  -1.45  0.29
+   36 |  +0.0072   +0.0965 |  +0.0012   -0.0198 |      0.8144 |  -1.41  0.42
+   40 |  +0.0045   +0.1280 |  +0.0113   +0.0426 |      0.8245 |  -1.41  0.58 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8132 AUPR 0.5211 | S+L+Z AUC 0.8245 AUPR 0.5636 | dZ AUC +0.0113 dZ AUPR +0.0426
+  (for reference, FINAL ep40: dZ AUC +0.0113 dZ AUPR +0.0426)
+
+----  FOLD fold5  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0027   +0.0175 |  -0.0131   -0.0199 |      0.7986 |   +nan  0.00
+    4 |  +0.0081   +0.0228 |  -0.0145   +0.0135 |      0.7973 |  -1.42  0.02
+    8 |  +0.0179   -0.0227 |  -0.0051   +0.0121 |      0.8066 |  -1.46  0.04
+   12 |  +0.0018   -0.0233 |  -0.0042   +0.0481 |      0.8075 |  -1.44  0.05
+   16 |  +0.0305   +0.0738 |  +0.0007   +0.0196 |      0.8125 |  -1.42  0.07
+   20 |  +0.0063   +0.0303 |  +0.0012   +0.0140 |      0.8129 |  -1.45  0.10
+   24 |  +0.0403   +0.1022 |  -0.0158   -0.0240 |      0.7959 |  -1.42  0.13
+   28 |  +0.0466   +0.1209 |  -0.0174   +0.0100 |      0.7943 |  -1.49  0.17
+   32 |  +0.0341   +0.0385 |  -0.0040   +0.0257 |      0.8077 |  -1.44  0.24
+   36 |  +0.0376   +0.0789 |  +0.0024   +0.0192 |      0.8141 |  -1.45  0.33
+   40 |  +0.0269   +0.0486 |  +0.0091   +0.0330 |      0.8208 |  -1.44  0.43 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8117 AUPR 0.5405 | S+L+Z AUC 0.8208 AUPR 0.5735 | dZ AUC +0.0091 dZ AUPR +0.0330
+  (for reference, FINAL ep40: dZ AUC +0.0091 dZ AUPR +0.0330)
+
+----  FOLD fold6  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0108   +0.0115 |  +0.0127   +0.0545 |      0.8324 |   +nan  0.00
+    4 |  -0.0179   +0.0399 |  -0.0021   +0.0368 |      0.8177 |  -1.41  0.03
+    8 |  -0.0036   +0.0146 |  +0.0122   +0.0690 |      0.8320 |  -1.40  0.04
+   12 |  -0.0054   +0.0976 |  +0.0201   +0.0734 |      0.8399 |  -1.42  0.05
+   16 |  +0.0063   +0.1204 |  +0.0149   +0.0651 |      0.8347 |  -1.44  0.07
+   20 |  +0.0125   +0.0577 |  +0.0203   +0.1037 |      0.8400 |  -1.44  0.09
+   24 |  +0.0332   +0.0651 |  +0.0200   +0.0753 |      0.8397 |  -1.46  0.12
+   28 |  +0.0018   +0.0710 |  +0.0233   +0.0384 |      0.8430 |  -1.45  0.17
+   32 |  -0.0072   +0.1048 |  +0.0204   +0.0724 |      0.8402 |  -1.40  0.25
+   36 |  +0.0027   +0.1052 |  +0.0259   +0.0630 |      0.8457 |  -1.42  0.36
+   40 |  -0.0063   +0.0296 |  +0.0103   +0.0379 |      0.8301 |  -1.43  0.50 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8198 AUPR 0.5000 | S+L+Z AUC 0.8301 AUPR 0.5379 | dZ AUC +0.0103 dZ AUPR +0.0379
+  (for reference, FINAL ep40: dZ AUC +0.0103 dZ AUPR +0.0379)
+
+----  FOLD fold7  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0090   +0.0076 |  -0.0045   -0.0177 |      0.8181 |   +nan  0.00
+    4 |  +0.0376   +0.1452 |  -0.0036   -0.0114 |      0.8190 |  -1.43  0.03
+    8 |  +0.0314   +0.0771 |  -0.0191   -0.0187 |      0.8035 |  -1.41  0.04
+   12 |  +0.0242   +0.0707 |  -0.0240   -0.0404 |      0.7986 |  -1.46  0.05
+   16 |  +0.0287   +0.0912 |  -0.0073   -0.0260 |      0.8153 |  -1.44  0.06
+   20 |  +0.0529   +0.1434 |  +0.0000   +0.0117 |      0.8226 |  -1.41  0.07
+   24 |  +0.0332   +0.0869 |  -0.0039   -0.0008 |      0.8187 |  -1.42  0.08
+   28 |  +0.0466   +0.1205 |  -0.0148   -0.0625 |      0.8078 |  -1.45  0.09
+   32 |  +0.0475   +0.0460 |  -0.0185   -0.0806 |      0.8041 |  -1.43  0.12
+   36 |  +0.0573   -0.0019 |  -0.0231   -0.0484 |      0.7995 |  -1.45  0.16
+   40 |  +0.0412   -0.0229 |  -0.0116   -0.0419 |      0.8110 |  -1.44  0.22 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8226 AUPR 0.5617 | S+L+Z AUC 0.8110 AUPR 0.5197 | dZ AUC -0.0116 dZ AUPR -0.0419
+  (for reference, FINAL ep40: dZ AUC -0.0116 dZ AUPR -0.0419)
+
+----  FOLD fold8  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0218   +0.0230 |  -0.0034   +0.0072 |      0.8208 |   +nan  0.00
+    4 |  +0.0332   +0.0763 |  -0.0155   -0.0606 |      0.8087 |  -1.41  0.03
+    8 |  +0.0313   +0.0086 |  -0.0210   -0.0868 |      0.8032 |  -1.43  0.04
+   12 |  +0.0398   +0.0768 |  -0.0137   -0.0985 |      0.8105 |  -1.47  0.06
+   16 |  +0.0323   +0.0127 |  -0.0004   -0.0283 |      0.8238 |  -1.43  0.09
+   20 |  +0.0398   +0.0494 |  -0.0173   -0.0736 |      0.8069 |  -1.41  0.13
+   24 |  +0.0218   +0.0427 |  -0.0076   -0.0476 |      0.8166 |  -1.42  0.18
+   28 |  +0.0465   +0.0435 |  -0.0061   -0.0454 |      0.8181 |  -1.43  0.26
+   32 |  +0.0266   +0.0099 |  -0.0091   -0.0441 |      0.8151 |  -1.42  0.35
+   36 |  +0.0446   +0.0393 |  -0.0206   -0.0838 |      0.8037 |  -1.42  0.46
+   40 |  +0.0304   +0.0145 |  -0.0127   -0.0677 |      0.8116 |  -1.45  0.57 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8242 AUPR 0.5662 | S+L+Z AUC 0.8116 AUPR 0.4985 | dZ AUC -0.0127 dZ AUPR -0.0677
+  (for reference, FINAL ep40: dZ AUC -0.0127 dZ AUPR -0.0677)
+
+----  FOLD fold9  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  -0.0304   -0.0006 |  -0.0064   +0.0074 |      0.8092 |   +nan  0.00
+    4 |  +0.0332   +0.0708 |  +0.0100   +0.0210 |      0.8256 |  -1.41  0.05
+    8 |  +0.0370   +0.0210 |  +0.0089   +0.0274 |      0.8245 |  -1.36  0.07
+   12 |  +0.0095   +0.0253 |  +0.0194   +0.0379 |      0.8350 |  -1.39  0.08
+   16 |  +0.0123   +0.0187 |  +0.0154   +0.0249 |      0.8309 |  -1.36  0.09
+   20 |  +0.0332   +0.0556 |  +0.0092   +0.0202 |      0.8248 |  -1.35  0.10
+   24 |  +0.0142   -0.0076 |  +0.0075   +0.0198 |      0.8230 |  -1.37  0.11
+   28 |  +0.0038   -0.0192 |  +0.0010   +0.0092 |      0.8166 |  -1.37  0.13
+   32 |  -0.0047   -0.0395 |  +0.0206   +0.0404 |      0.8362 |  -1.38  0.17
+   36 |  +0.0009   -0.0067 |  +0.0186   +0.0233 |      0.8342 |  -1.40  0.23
+   40 |  -0.0123   -0.0167 |  +0.0210   +0.0131 |      0.8366 |  -1.36  0.32 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8156 AUPR 0.5387 | S+L+Z AUC 0.8366 AUPR 0.5519 | dZ AUC +0.0210 dZ AUPR +0.0131
+  (for reference, FINAL ep40: dZ AUC +0.0210 dZ AUPR +0.0131)
+
+
+================  SUMMARY (RLOO scratch, 10-fold on remainder, early-stop on val-none, scored on FROZEN hold-out)  ================
+    unit   ep |  S+L AUC   +Z AUC   dZ_AU |  S+L AUPR  +Z AUPR   dZ_AP | final_dAU
+   fold0   40 |   0.7935   0.8186 +0.0250 |    0.4832   0.5143 +0.0311 |   +0.0250
+   fold1   40 |   0.8213   0.8356 +0.0143 |    0.5863   0.5725 -0.0138 |   +0.0143
+   fold2   40 |   0.8129   0.8011 -0.0118 |    0.5573   0.4869 -0.0704 |   -0.0118
+   fold3   40 |   0.8163   0.8262 +0.0098 |    0.5392   0.5805 +0.0413 |   +0.0098
+   fold4   40 |   0.8132   0.8245 +0.0113 |    0.5211   0.5636 +0.0426 |   +0.0113
+   fold5   40 |   0.8117   0.8208 +0.0091 |    0.5405   0.5735 +0.0330 |   +0.0091
+   fold6   40 |   0.8198   0.8301 +0.0103 |    0.5000   0.5379 +0.0379 |   +0.0103
+   fold7   40 |   0.8226   0.8110 -0.0116 |    0.5617   0.5197 -0.0419 |   -0.0116
+   fold8   40 |   0.8242   0.8116 -0.0127 |    0.5662   0.4985 -0.0677 |   -0.0127
+   fold9   40 |   0.8156   0.8366 +0.0210 |    0.5387   0.5519 +0.0131 |   +0.0210
+
+  At val-selected epoch, across 10 folds:
+    AUC :  S+L 0.8151±0.0083 | S+L+Z 0.8216±0.0108 | dZ +0.0065 wins 7/10
+    AUPR:  S+L 0.5394±0.0296 | S+L+Z 0.5399±0.0318 | dZ +0.0005 wins 6/10
+
+  early-stop vs run-to-end (dZ-AUC): selected +0.0065 | final-epoch +0.0065 | gain +0.0000
+
+  PAIRED TEST  (S+L+Z) vs (S+L)  at val-selected epoch, 10 folds:
+    AUC-ROC        mean dZ +0.0065 | wins 7/10 | paired-t t=+1.491 p=0.1700 | Wilcoxon W=18.0 p=0.3750 | dz=+0.47
+    AUPR           mean dZ +0.0005 | wins 6/10 | paired-t t=+0.036 p=0.9718 | Wilcoxon W=27.0 p=1.0000 | dz=+0.01
+    (dz = Cohen's d for paired diffs; |dz|>0.8 large. n folds is small,
+     so Wilcoxon p floors at ~0.002 for n=10 / ~0.06 for n=5.)
+
+[full-fit base] TRAIN RL on ALL remainder (N=798, no CV, val included) -> score on FROZEN hold-out (N=199)
+
+================  FULL-FIT BASE (all remainder, no CV, RL-trained)  ================
+  fit N=798 (pos 174, rate 0.218) | test N=199 (pos 43, rate 0.216)
+  S+L    :  AUC 0.8229  AUPR 0.5596
+  S+L+Z  :  AUC 0.8335  AUPR 0.5729   (dZ AUC +0.0106  dZ AUPR +0.0133)
+
+
+######## clf=xgb lr=1e-4 rl_epochs=40 eval_every=4 ########
+Using device: cuda
+[normalize] input z-scoring = False (applied to ALL classifiers)
+Loading patients... False True
+Loading 2
+From pkl
+<utils.class_patient.Patient object at 0x7f34e22f32e0>
+Loaded 1213 patients
+After cleanup: 1206 patients
+[Landmark] L=24h H=48h | excluded 209 pre-landmark AKI | cohort 1206 -> 997 | pos 217 (21.77%)
+AKI positive (horizon): 217 (21.77%)
+[holdout] frac~0.2 seed=12345 N_holdout=199 (pos 43, rate 0.216) | N_remainder=798  FROZEN, never seen in training
+
+----  FOLD fold0  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0140   +0.0331 |  +0.0177   +0.0228 |      0.8113 |   +nan  0.00
+    4 |  +0.0532   +0.1063 |  +0.0218   +0.0457 |      0.8153 |  -1.40  0.00
+    8 |  +0.0430   +0.1166 |  -0.0013   -0.0057 |      0.7922 |  -1.43  0.00
+   12 |  +0.0233   +0.1127 |  +0.0100   +0.0406 |      0.8035 |  -1.45  0.00
+   16 |  +0.0215   +0.1110 |  +0.0049   +0.0153 |      0.7984 |  -1.39  0.00
+   20 |  +0.0243   +0.0418 |  +0.0091   +0.0458 |      0.8026 |  -1.40  0.01
+   24 |  +0.0299   +0.1264 |  +0.0069   +0.0500 |      0.8004 |  -1.37  0.01
+   28 |  +0.0607   +0.1420 |  +0.0085   +0.0299 |      0.8020 |  -1.40  0.01
+   32 |  +0.0243   +0.0909 |  +0.0106   +0.0064 |      0.8041 |  -1.44  0.01
+   36 |  +0.0308   +0.1180 |  +0.0125   +0.0138 |      0.8061 |  -1.43  0.01
+   40 |  +0.0411   +0.1798 |  +0.0292   +0.0281 |      0.8227 |  -1.41  0.01 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.7935 AUPR 0.4832 | S+L+Z AUC 0.8227 AUPR 0.5114 | dZ AUC +0.0292 dZ AUPR +0.0281
+  (for reference, FINAL ep40: dZ AUC +0.0292 dZ AUPR +0.0281)
+
+----  FOLD fold1  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  -0.0112   -0.0212 |  +0.0030   -0.0193 |      0.8242 |   +nan  0.00
+    4 |  -0.0112   +0.0593 |  +0.0027   -0.0759 |      0.8239 |  -1.40  0.00
+    8 |  -0.0112   -0.0260 |  +0.0128   +0.0054 |      0.8341 |  -1.38  0.00
+   12 |  +0.0149   +0.0679 |  +0.0125   +0.0392 |      0.8338 |  -1.41  0.00
+   16 |  -0.0103   +0.0455 |  -0.0055   -0.0597 |      0.8157 |  -1.41  0.00
+   20 |  -0.0289   -0.0082 |  +0.0012   -0.0702 |      0.8225 |  -1.41  0.00
+   24 |  -0.0187   +0.0642 |  -0.0191   -0.0917 |      0.8022 |  -1.45  0.00
+   28 |  +0.0019   +0.0920 |  -0.0034   -0.0571 |      0.8178 |  -1.42  0.01
+   32 |  -0.0000   +0.0776 |  -0.0054   -0.0640 |      0.8159 |  -1.42  0.01
+   36 |  +0.0112   +0.0658 |  -0.0064   -0.0915 |      0.8148 |  -1.46  0.01
+   40 |  -0.0131   +0.0529 |  +0.0082   -0.0421 |      0.8295 |  -1.40  0.01 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8213 AUPR 0.5863 | S+L+Z AUC 0.8295 AUPR 0.5442 | dZ AUC +0.0082 dZ AUPR -0.0421
+  (for reference, FINAL ep40: dZ AUC +0.0082 dZ AUPR -0.0421)
+
+----  FOLD fold2  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  -0.0187   -0.0337 |  +0.0010   -0.0127 |      0.8140 |   +nan  0.00
+    4 |  +0.0084   -0.0395 |  -0.0037   -0.0178 |      0.8092 |  -1.45  0.00
+    8 |  -0.0177   -0.0806 |  -0.0069   -0.0422 |      0.8061 |  -1.42  0.00
+   12 |  -0.0345   -0.1195 |  +0.0154   -0.0133 |      0.8283 |  -1.46  0.00
+   16 |  -0.0065   -0.0651 |  +0.0146   -0.0478 |      0.8275 |  -1.43  0.01
+   20 |  -0.0112   -0.0273 |  +0.0268   +0.0468 |      0.8397 |  -1.41  0.01
+   24 |  -0.0233   -0.0773 |  +0.0243   +0.0610 |      0.8372 |  -1.43  0.01
+   28 |  -0.0243   -0.0827 |  +0.0244   +0.0173 |      0.8374 |  -1.39  0.01
+   32 |  -0.0355   -0.0592 |  +0.0192   +0.0471 |      0.8321 |  -1.46  0.01
+   36 |  -0.0355   -0.1362 |  +0.0037   +0.0012 |      0.8166 |  -1.43  0.01
+   40 |  -0.0056   -0.0881 |  +0.0076   -0.0362 |      0.8205 |  -1.39  0.01 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8129 AUPR 0.5573 | S+L+Z AUC 0.8205 AUPR 0.5211 | dZ AUC +0.0076 dZ AUPR -0.0362
+  (for reference, FINAL ep40: dZ AUC +0.0076 dZ AUPR -0.0362)
+
+----  FOLD fold3  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  -0.0140   -0.0067 |  -0.0015   +0.0163 |      0.8148 |   +nan  0.00
+    4 |  -0.0121   +0.1021 |  +0.0049   -0.0024 |      0.8213 |  -1.37  0.00
+    8 |  -0.0196   +0.0222 |  -0.0104   -0.0404 |      0.8059 |  -1.39  0.00
+   12 |  -0.0075   +0.0724 |  -0.0010   +0.0095 |      0.8153 |  -1.39  0.00
+   16 |  -0.0149   +0.0608 |  +0.0006   -0.0167 |      0.8169 |  -1.41  0.01
+   20 |  -0.0317   +0.0366 |  -0.0082   -0.0128 |      0.8081 |  -1.39  0.01
+   24 |  -0.0261   +0.1011 |  -0.0088   -0.0304 |      0.8075 |  -1.39  0.01
+   28 |  -0.0112   +0.0275 |  -0.0151   -0.0490 |      0.8013 |  -1.40  0.01
+   32 |  -0.0196   -0.0079 |  -0.0012   +0.0205 |      0.8151 |  -1.43  0.01
+   36 |  +0.0009   +0.1032 |  -0.0109   +0.0027 |      0.8055 |  -1.39  0.01
+   40 |  -0.0187   +0.0429 |  -0.0061   -0.0056 |      0.8102 |  -1.38  0.01 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8163 AUPR 0.5392 | S+L+Z AUC 0.8102 AUPR 0.5336 | dZ AUC -0.0061 dZ AUPR -0.0056
+  (for reference, FINAL ep40: dZ AUC -0.0061 dZ AUPR -0.0056)
+
+----  FOLD fold4  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0090   +0.0376 |  +0.0000   +0.0272 |      0.8132 |   +nan  0.00
+    4 |  +0.0233   +0.1910 |  +0.0063   -0.0247 |      0.8195 |  -1.46  0.00
+    8 |  +0.0412   +0.1680 |  +0.0072   -0.0257 |      0.8204 |  -1.47  0.01
+   12 |  +0.0305   +0.1312 |  +0.0045   -0.0149 |      0.8177 |  -1.43  0.01
+   16 |  +0.0251   +0.1208 |  +0.0227   +0.0056 |      0.8359 |  -1.43  0.01
+   20 |  +0.0027   +0.0999 |  +0.0200   -0.0081 |      0.8332 |  -1.41  0.01
+   24 |  +0.0197   +0.1295 |  +0.0130   -0.0413 |      0.8262 |  -1.44  0.01
+   28 |  +0.0305   +0.1663 |  +0.0258   +0.0057 |      0.8390 |  -1.47  0.01
+   32 |  +0.0376   +0.1461 |  +0.0119   -0.0537 |      0.8251 |  -1.46  0.01
+   36 |  +0.0260   +0.1575 |  +0.0329   +0.0165 |      0.8462 |  -1.42  0.01
+   40 |  +0.0502   +0.1988 |  +0.0188   -0.0047 |      0.8320 |  -1.44  0.01 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8132 AUPR 0.5211 | S+L+Z AUC 0.8320 AUPR 0.5164 | dZ AUC +0.0188 dZ AUPR -0.0047
+  (for reference, FINAL ep40: dZ AUC +0.0188 dZ AUPR -0.0047)
+
+----  FOLD fold5  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0027   +0.0175 |  -0.0131   -0.0199 |      0.7986 |   +nan  0.00
+    4 |  -0.0161   -0.0417 |  -0.0049   +0.0059 |      0.8068 |  -1.42  0.00
+    8 |  +0.0036   -0.0231 |  -0.0174   +0.0216 |      0.7943 |  -1.45  0.00
+   12 |  +0.0206   +0.0092 |  +0.0007   +0.0362 |      0.8125 |  -1.43  0.00
+   16 |  +0.0000   -0.0342 |  -0.0115   -0.0113 |      0.8002 |  -1.41  0.01
+   20 |  -0.0125   -0.0456 |  -0.0049   +0.0391 |      0.8068 |  -1.46  0.01
+   24 |  +0.0152   +0.0607 |  +0.0043   +0.0375 |      0.8160 |  -1.43  0.01
+   28 |  +0.0090   +0.0473 |  -0.0224   +0.0399 |      0.7894 |  -1.48  0.01
+   32 |  -0.0081   -0.0217 |  -0.0173   -0.0068 |      0.7944 |  -1.44  0.01
+   36 |  +0.0063   +0.0440 |  -0.0292   +0.0094 |      0.7825 |  -1.46  0.01
+   40 |  +0.0018   +0.0078 |  -0.0188   +0.0474 |      0.7929 |  -1.45  0.01 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8117 AUPR 0.5405 | S+L+Z AUC 0.7929 AUPR 0.5879 | dZ AUC -0.0188 dZ AUPR +0.0474
+  (for reference, FINAL ep40: dZ AUC -0.0188 dZ AUPR +0.0474)
+
+----  FOLD fold6  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0108   +0.0115 |  +0.0127   +0.0545 |      0.8324 |   +nan  0.00
+    4 |  +0.0116   +0.0806 |  +0.0100   +0.0624 |      0.8298 |  -1.40  0.00
+    8 |  -0.0072   +0.0460 |  +0.0179   +0.0702 |      0.8377 |  -1.40  0.00
+   12 |  -0.0027   +0.0805 |  +0.0119   +0.0780 |      0.8317 |  -1.43  0.01
+   16 |  -0.0206   +0.0212 |  +0.0064   +0.0687 |      0.8262 |  -1.42  0.01
+   20 |  -0.0018   +0.0830 |  +0.0094   +0.0302 |      0.8292 |  -1.45  0.01
+   24 |  -0.0072   +0.0341 |  +0.0133   +0.0507 |      0.8330 |  -1.44  0.01
+   28 |  -0.0161   +0.0117 |  +0.0198   +0.0504 |      0.8396 |  -1.43  0.01
+   32 |  -0.0260   +0.0359 |  +0.0146   +0.0793 |      0.8344 |  -1.40  0.01
+   36 |  +0.0009   +0.0780 |  +0.0182   +0.0949 |      0.8380 |  -1.42  0.01
+   40 |  -0.0161   +0.0404 |  +0.0116   +0.0678 |      0.8314 |  -1.43  0.01 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8198 AUPR 0.5000 | S+L+Z AUC 0.8314 AUPR 0.5678 | dZ AUC +0.0116 dZ AUPR +0.0678
+  (for reference, FINAL ep40: dZ AUC +0.0116 dZ AUPR +0.0678)
+
+----  FOLD fold7  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0090   +0.0076 |  -0.0045   -0.0177 |      0.8181 |   +nan  0.00
+    4 |  +0.0143   +0.0743 |  -0.0167   -0.0503 |      0.8059 |  -1.42  0.00
+    8 |  +0.0224   +0.0393 |  -0.0069   -0.0126 |      0.8157 |  -1.42  0.00
+   12 |  +0.0215   +0.0809 |  -0.0215   -0.0518 |      0.8011 |  -1.46  0.00
+   16 |  +0.0179   +0.0667 |  -0.0121   -0.0051 |      0.8105 |  -1.43  0.01
+   20 |  +0.0125   +0.0738 |  -0.0089   -0.0219 |      0.8137 |  -1.41  0.01
+   24 |  +0.0170   +0.0812 |  -0.0271   -0.0247 |      0.7955 |  -1.42  0.01
+   28 |  +0.0081   +0.0818 |  -0.0112   -0.0160 |      0.8114 |  -1.43  0.01
+   32 |  +0.0403   +0.1426 |  -0.0037   +0.0120 |      0.8189 |  -1.43  0.01
+   36 |  +0.0529   +0.1486 |  -0.0131   -0.0096 |      0.8095 |  -1.43  0.01
+   40 |  +0.0547   +0.1642 |  -0.0066   -0.0395 |      0.8160 |  -1.44  0.01 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8226 AUPR 0.5617 | S+L+Z AUC 0.8160 AUPR 0.5222 | dZ AUC -0.0066 dZ AUPR -0.0395
+  (for reference, FINAL ep40: dZ AUC -0.0066 dZ AUPR -0.0395)
+
+----  FOLD fold8  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0218   +0.0230 |  -0.0034   +0.0072 |      0.8208 |   +nan  0.00
+    4 |  +0.0332   +0.0599 |  -0.0106   -0.0468 |      0.8137 |  -1.40  0.00
+    8 |  +0.0152   +0.0068 |  -0.0194   -0.0780 |      0.8049 |  -1.43  0.00
+   12 |  +0.0190   +0.0474 |  -0.0258   -0.0993 |      0.7984 |  -1.48  0.00
+   16 |  -0.0038   -0.0210 |  -0.0209   -0.0893 |      0.8034 |  -1.41  0.01
+   20 |  +0.0190   +0.0084 |  -0.0206   -0.0853 |      0.8037 |  -1.40  0.01
+   24 |  +0.0066   -0.0201 |  -0.0203   -0.0921 |      0.8040 |  -1.41  0.01
+   28 |  +0.0351   +0.0219 |  -0.0203   -0.0887 |      0.8040 |  -1.45  0.01
+   32 |  +0.0047   +0.0141 |  -0.0171   -0.0785 |      0.8071 |  -1.40  0.01
+   36 |  +0.0313   +0.0540 |  -0.0189   -0.0685 |      0.8053 |  -1.45  0.01
+   40 |  +0.0038   +0.0249 |  -0.0070   -0.0583 |      0.8172 |  -1.43  0.01 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8242 AUPR 0.5662 | S+L+Z AUC 0.8172 AUPR 0.5079 | dZ AUC -0.0070 dZ AUPR -0.0583
+  (for reference, FINAL ep40: dZ AUC -0.0070 dZ AUPR -0.0583)
+
+----  FOLD fold9  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  -0.0304   -0.0006 |  -0.0064   +0.0074 |      0.8092 |   +nan  0.00
+    4 |  +0.0209   +0.0464 |  +0.0139   +0.0389 |      0.8295 |  -1.41  0.00
+    8 |  +0.0123   +0.0423 |  -0.0012   +0.0401 |      0.8144 |  -1.37  0.01
+   12 |  +0.0028   +0.0384 |  +0.0180   +0.0572 |      0.8336 |  -1.37  0.01
+   16 |  +0.0199   +0.0311 |  +0.0161   +0.0354 |      0.8317 |  -1.35  0.01
+   20 |  +0.0247   +0.0014 |  +0.0066   +0.0223 |      0.8222 |  -1.35  0.01
+   24 |  +0.0218   +0.0123 |  -0.0031   +0.0122 |      0.8125 |  -1.36  0.01
+   28 |  +0.0152   +0.0074 |  +0.0085   +0.0069 |      0.8241 |  -1.35  0.01
+   32 |  +0.0380   +0.0215 |  +0.0119   +0.0507 |      0.8275 |  -1.36  0.01
+   36 |  +0.0266   +0.0219 |  +0.0037   +0.0192 |      0.8193 |  -1.37  0.01
+   40 |  +0.0114   +0.0080 |  +0.0160   +0.0289 |      0.8315 |  -1.35  0.01 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8156 AUPR 0.5387 | S+L+Z AUC 0.8315 AUPR 0.5677 | dZ AUC +0.0160 dZ AUPR +0.0289
+  (for reference, FINAL ep40: dZ AUC +0.0160 dZ AUPR +0.0289)
+
+
+================  SUMMARY (RLOO scratch, 10-fold on remainder, early-stop on val-none, scored on FROZEN hold-out)  ================
+    unit   ep |  S+L AUC   +Z AUC   dZ_AU |  S+L AUPR  +Z AUPR   dZ_AP | final_dAU
+   fold0   40 |   0.7935   0.8227 +0.0292 |    0.4832   0.5114 +0.0281 |   +0.0292
+   fold1   40 |   0.8213   0.8295 +0.0082 |    0.5863   0.5442 -0.0421 |   +0.0082
+   fold2   40 |   0.8129   0.8205 +0.0076 |    0.5573   0.5211 -0.0362 |   +0.0076
+   fold3   40 |   0.8163   0.8102 -0.0061 |    0.5392   0.5336 -0.0056 |   -0.0061
+   fold4   40 |   0.8132   0.8320 +0.0188 |    0.5211   0.5164 -0.0047 |   +0.0188
+   fold5   40 |   0.8117   0.7929 -0.0188 |    0.5405   0.5879 +0.0474 |   -0.0188
+   fold6   40 |   0.8198   0.8314 +0.0116 |    0.5000   0.5678 +0.0678 |   +0.0116
+   fold7   40 |   0.8226   0.8160 -0.0066 |    0.5617   0.5222 -0.0395 |   -0.0066
+   fold8   40 |   0.8242   0.8172 -0.0070 |    0.5662   0.5079 -0.0583 |   -0.0070
+   fold9   40 |   0.8156   0.8315 +0.0160 |    0.5387   0.5677 +0.0289 |   +0.0160
+
+  At val-selected epoch, across 10 folds:
+    AUC :  S+L 0.8151±0.0083 | S+L+Z 0.8204±0.0116 | dZ +0.0053 wins 6/10
+    AUPR:  S+L 0.5394±0.0296 | S+L+Z 0.5380±0.0263 | dZ -0.0014 wins 4/10
+
+  early-stop vs run-to-end (dZ-AUC): selected +0.0053 | final-epoch +0.0053 | gain +0.0000
+
+  PAIRED TEST  (S+L+Z) vs (S+L)  at val-selected epoch, 10 folds:
+    AUC-ROC        mean dZ +0.0053 | wins 6/10 | paired-t t=+1.145 p=0.2818 | Wilcoxon W=15.0 p=0.2324 | dz=+0.36
+    AUPR           mean dZ -0.0014 | wins 4/10 | paired-t t=-0.104 p=0.9194 | Wilcoxon W=25.0 p=0.8457 | dz=-0.03
+    (dz = Cohen's d for paired diffs; |dz|>0.8 large. n folds is small,
+     so Wilcoxon p floors at ~0.002 for n=10 / ~0.06 for n=5.)
+
+[full-fit base] TRAIN RL on ALL remainder (N=798, no CV, val included) -> score on FROZEN hold-out (N=199)
+
+================  FULL-FIT BASE (all remainder, no CV, RL-trained)  ================
+  fit N=798 (pos 174, rate 0.218) | test N=199 (pos 43, rate 0.216)
+  S+L    :  AUC 0.8229  AUPR 0.5596
+  S+L+Z  :  AUC 0.8210  AUPR 0.5649   (dZ AUC -0.0019  dZ AUPR +0.0053)
+
+
+######## clf=cat lr=1e-2 rl_epochs=40 eval_every=4 ########
+Using device: cuda
+[normalize] input z-scoring = False (applied to ALL classifiers)
+Loading patients... False True
+Loading 2
+From pkl
+<utils.class_patient.Patient object at 0x7f99b21c72e0>
+Loaded 1213 patients
+After cleanup: 1206 patients
+[Landmark] L=24h H=48h | excluded 209 pre-landmark AKI | cohort 1206 -> 997 | pos 217 (21.77%)
+AKI positive (horizon): 217 (21.77%)
+[holdout] frac~0.2 seed=12345 N_holdout=199 (pos 43, rate 0.216) | N_remainder=798  FROZEN, never seen in training
+
+----  FOLD fold0  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0000   +0.0000 |  +0.0000   +0.0000 |      0.8083 |   +nan  0.00
+    4 |  +0.0149   +0.0700 |  +0.0174   +0.1035 |      0.8257 |  -1.44  0.45
+    8 |  +0.0327   +0.1159 |  +0.0216   +0.0748 |      0.8299 |  -1.44  1.80
+   12 |  +0.0327   +0.1031 |  +0.0134   +0.0726 |      0.8217 |  -1.43  3.77
+   16 |  -0.0345   -0.0090 |  +0.0304   +0.1032 |      0.8387 |  -1.39  5.26
+   20 |  -0.0121   +0.0611 |  +0.0018   +0.0483 |      0.8101 |  -1.36  7.18
+   24 |  +0.0243   -0.0047 |  +0.0106   +0.0924 |      0.8189 |  -1.37  9.88
+   28 |  -0.0056   -0.0112 |  +0.0276   +0.0981 |      0.8359 |  -1.39 11.66
+   32 |  +0.0411   +0.0979 |  +0.0273   +0.0903 |      0.8356 |  -1.38 13.57
+   36 |  +0.0065   +0.0012 |  +0.0069   +0.0189 |      0.8151 |  -1.33 16.61
+   40 |  +0.0364   +0.0540 |  +0.0204   +0.1051 |      0.8287 |  -1.40 16.34 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8083 AUPR 0.4722 | S+L+Z AUC 0.8287 AUPR 0.5773 | dZ AUC +0.0204 dZ AUPR +0.1051
+  (for reference, FINAL ep40: dZ AUC +0.0204 dZ AUPR +0.1051)
+
+----  FOLD fold1  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0000   +0.0000 |  +0.0000   +0.0000 |      0.8151 |   +nan  0.00
+    4 |  +0.0131   +0.0472 |  +0.0228   +0.0212 |      0.8380 |  -1.44  0.42
+    8 |  -0.0037   -0.0033 |  +0.0013   +0.0052 |      0.8165 |  -1.41  1.77
+   12 |  +0.0205   +0.0512 |  +0.0119   +0.0217 |      0.8271 |  -1.36  3.53
+   16 |  +0.0028   -0.0145 |  +0.0073   -0.0320 |      0.8225 |  -1.41  7.06
+   20 |  +0.0112   +0.0481 |  +0.0151   +0.0285 |      0.8302 |  -1.38  9.83
+   24 |  -0.0103   +0.0549 |  +0.0167   +0.0163 |      0.8318 |  -1.43 12.58
+   28 |  +0.0187   +0.0910 |  +0.0210   +0.0495 |      0.8362 |  -1.42 12.64
+   32 |  +0.0271   +0.0388 |  +0.0253   +0.0790 |      0.8405 |  -1.36 13.86
+   36 |  +0.0121   +0.0543 |  +0.0031   +0.0326 |      0.8183 |  -1.43 16.55
+   40 |  +0.0065   +0.0792 |  +0.0213   +0.0410 |      0.8365 |  -1.42 17.65 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8151 AUPR 0.5428 | S+L+Z AUC 0.8365 AUPR 0.5839 | dZ AUC +0.0213 dZ AUPR +0.0410
+  (for reference, FINAL ep40: dZ AUC +0.0213 dZ AUPR +0.0410)
+
+----  FOLD fold2  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0000   +0.0000 |  +0.0000   +0.0000 |      0.8260 |   +nan  0.00
+    4 |  -0.0355   -0.0875 |  -0.0073   -0.0642 |      0.8187 |  -1.43  0.49
+    8 |  -0.0037   -0.0167 |  -0.0140   -0.1022 |      0.8120 |  -1.41  1.80
+   12 |  +0.0140   +0.0141 |  -0.0103   -0.0640 |      0.8157 |  -1.44  4.66
+   16 |  +0.0009   +0.0575 |  -0.0061   -0.0317 |      0.8199 |  -1.37  6.96
+   20 |  +0.0149   +0.0220 |  +0.0051   -0.0414 |      0.8311 |  -1.37  9.53
+   24 |  +0.0000   +0.0090 |  +0.0107   -0.0447 |      0.8368 |  -1.37 11.28
+   28 |  +0.0084   +0.0661 |  -0.0070   -0.0576 |      0.8190 |  -1.41 15.27
+   32 |  -0.0009   -0.0008 |  +0.0027   +0.0066 |      0.8287 |  -1.44 17.64
+   36 |  +0.0159   +0.0157 |  -0.0022   -0.0390 |      0.8238 |  -1.42 19.30
+   40 |  +0.0037   +0.0029 |  +0.0076   -0.0182 |      0.8336 |  -1.40 20.88 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8260 AUPR 0.5679 | S+L+Z AUC 0.8336 AUPR 0.5498 | dZ AUC +0.0076 dZ AUPR -0.0182
+  (for reference, FINAL ep40: dZ AUC +0.0076 dZ AUPR -0.0182)
+
+----  FOLD fold3  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0000   +0.0000 |  +0.0000   +0.0000 |      0.8227 |   +nan  0.00
+    4 |  +0.0121   +0.0343 |  -0.0212   -0.0678 |      0.8016 |  -1.41  0.33
+    8 |  -0.0159   +0.0023 |  -0.0088   -0.0622 |      0.8140 |  -1.39  1.34
+   12 |  -0.0205   -0.0074 |  -0.0091   -0.0479 |      0.8137 |  -1.37  3.42
+   16 |  -0.0345   -0.0084 |  -0.0022   -0.0253 |      0.8205 |  -1.38  6.26
+   20 |  -0.0121   -0.0303 |  +0.0003   -0.0216 |      0.8230 |  -1.37  9.63
+   24 |  -0.0215   +0.0121 |  -0.0070   -0.0240 |      0.8157 |  -1.35 11.81
+   28 |  +0.0028   -0.0007 |  +0.0194   +0.0299 |      0.8421 |  -1.37 14.18
+   32 |  -0.0327   +0.0008 |  -0.0154   -0.0375 |      0.8074 |  -1.41 14.27
+   36 |  -0.0093   +0.0570 |  -0.0033   -0.0130 |      0.8195 |  -1.38 16.04
+   40 |  -0.0327   +0.0146 |  -0.0013   +0.0176 |      0.8214 |  -1.35 17.62 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8227 AUPR 0.5463 | S+L+Z AUC 0.8214 AUPR 0.5639 | dZ AUC -0.0013 dZ AUPR +0.0176
+  (for reference, FINAL ep40: dZ AUC -0.0013 dZ AUPR +0.0176)
+
+----  FOLD fold4  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0000   +0.0000 |  +0.0000   +0.0000 |      0.8187 |   +nan  0.00
+    4 |  -0.0090   +0.0439 |  +0.0183   -0.0215 |      0.8371 |  -1.49  0.67
+    8 |  -0.0009   -0.0041 |  -0.0010   -0.0133 |      0.8177 |  -1.46  2.84
+   12 |  -0.0108   -0.0493 |  -0.0070   -0.0469 |      0.8117 |  -1.43  3.94
+   16 |  -0.0054   -0.0197 |  +0.0113   +0.0189 |      0.8301 |  -1.45  6.78
+   20 |  +0.0224   +0.0260 |  +0.0064   +0.0023 |      0.8251 |  -1.43  9.83
+   24 |  -0.0036   -0.0215 |  +0.0140   +0.0409 |      0.8327 |  -1.41 12.38
+   28 |  -0.0170   -0.0528 |  -0.0037   +0.0320 |      0.8150 |  -1.41 16.71
+   32 |  +0.0054   -0.0141 |  +0.0100   -0.0153 |      0.8287 |  -1.44 18.76
+   36 |  +0.0099   +0.0180 |  +0.0043   +0.0316 |      0.8230 |  -1.44 21.09
+   40 |  -0.0090   +0.0385 |  +0.0064   +0.0106 |      0.8251 |  -1.44 22.89 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8187 AUPR 0.5362 | S+L+Z AUC 0.8251 AUPR 0.5468 | dZ AUC +0.0064 dZ AUPR +0.0106
+  (for reference, FINAL ep40: dZ AUC +0.0064 dZ AUPR +0.0106)
+
+----  FOLD fold5  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0000   +0.0000 |  +0.0000   +0.0000 |      0.8031 |   +nan  0.00
+    4 |  +0.0484   +0.1403 |  +0.0191   +0.0133 |      0.8222 |  -1.44  0.56
+    8 |  +0.0556   +0.1521 |  +0.0061   -0.0168 |      0.8092 |  -1.45  1.73
+   12 |  +0.0403   +0.0689 |  +0.0155   +0.0472 |      0.8186 |  -1.40  3.57
+   16 |  +0.0565   +0.0790 |  +0.0145   +0.0117 |      0.8175 |  -1.41  5.90
+   20 |  +0.0609   +0.1226 |  +0.0273   +0.0117 |      0.8304 |  -1.42  7.90
+   24 |  +0.0663   +0.1351 |  +0.0079   +0.0017 |      0.8110 |  -1.39 10.08
+   28 |  +0.0305   +0.1034 |  +0.0154   +0.0096 |      0.8184 |  -1.45 11.34
+   32 |  +0.0565   +0.1510 |  +0.0171   -0.0175 |      0.8202 |  -1.43 13.18
+   36 |  +0.0242   +0.0517 |  +0.0312   +0.0429 |      0.8342 |  -1.41 13.90
+   40 |  +0.0547   +0.1063 |  +0.0289   +0.0057 |      0.8320 |  -1.43 14.93 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8031 AUPR 0.5216 | S+L+Z AUC 0.8320 AUPR 0.5273 | dZ AUC +0.0289 dZ AUPR +0.0057
+  (for reference, FINAL ep40: dZ AUC +0.0289 dZ AUPR +0.0057)
+
+----  FOLD fold6  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0000   +0.0000 |  +0.0000   +0.0000 |      0.8256 |   +nan  0.00
+    4 |  +0.0009   +0.0917 |  +0.0142   +0.0016 |      0.8397 |  -1.42  0.49
+    8 |  +0.0179   +0.0975 |  +0.0203   +0.0287 |      0.8459 |  -1.42  2.24
+   12 |  +0.0161   +0.1106 |  -0.0003   -0.0129 |      0.8253 |  -1.42  3.49
+   16 |  +0.0170   +0.1141 |  +0.0128   +0.0233 |      0.8384 |  -1.41  6.28
+   20 |  +0.0036   +0.0935 |  -0.0061   -0.0025 |      0.8195 |  -1.38  8.99
+   24 |  +0.0027   +0.0317 |  -0.0066   -0.0596 |      0.8190 |  -1.40 11.13
+   28 |  +0.0018   +0.0206 |  -0.0037   -0.0077 |      0.8219 |  -1.38 11.98
+   32 |  +0.0009   -0.0007 |  +0.0167   -0.0026 |      0.8423 |  -1.41 13.43
+   36 |  +0.0161   +0.1107 |  +0.0152   +0.0418 |      0.8408 |  -1.38 14.40
+   40 |  +0.0170   +0.1005 |  +0.0069   -0.0173 |      0.8324 |  -1.39 16.58 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8256 AUPR 0.5632 | S+L+Z AUC 0.8324 AUPR 0.5459 | dZ AUC +0.0069 dZ AUPR -0.0173
+  (for reference, FINAL ep40: dZ AUC +0.0069 dZ AUPR -0.0173)
+
+----  FOLD fold7  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0000   +0.0000 |  +0.0000   +0.0000 |      0.8159 |   +nan  0.00
+    4 |  +0.0063   +0.0462 |  +0.0179   +0.0374 |      0.8338 |  -1.45  0.29
+    8 |  -0.0108   -0.0219 |  +0.0015   +0.0403 |      0.8174 |  -1.41  1.39
+   12 |  -0.0278   -0.0633 |  +0.0094   +0.0081 |      0.8253 |  -1.40  3.17
+   16 |  -0.0143   -0.0316 |  +0.0049   +0.0252 |      0.8208 |  -1.36  6.08
+   20 |  +0.0018   +0.0736 |  +0.0192   +0.0086 |      0.8351 |  -1.39 10.18
+   24 |  -0.0125   -0.0104 |  +0.0180   +0.0746 |      0.8339 |  -1.35 11.14
+   28 |  -0.0314   -0.0149 |  +0.0112   +0.0368 |      0.8271 |  -1.36 12.28
+   32 |  -0.0152   +0.0280 |  +0.0066   +0.0174 |      0.8225 |  -1.35 14.13
+   36 |  -0.0188   -0.0147 |  +0.0030   -0.0022 |      0.8189 |  -1.39 16.03
+   40 |  -0.0125   +0.0297 |  +0.0146   +0.0285 |      0.8305 |  -1.36 17.74 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8159 AUPR 0.5248 | S+L+Z AUC 0.8305 AUPR 0.5532 | dZ AUC +0.0146 dZ AUPR +0.0285
+  (for reference, FINAL ep40: dZ AUC +0.0146 dZ AUPR +0.0285)
+
+----  FOLD fold8  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0000   +0.0000 |  +0.0000   +0.0000 |      0.8138 |   +nan  0.00
+    4 |  +0.0019   -0.0403 |  +0.0019   -0.0095 |      0.8157 |  -1.39  0.62
+    8 |  +0.0019   -0.0080 |  +0.0043   +0.0164 |      0.8181 |  -1.40  2.26
+   12 |  -0.0123   -0.0512 |  +0.0064   +0.0358 |      0.8202 |  -1.39  5.20
+   16 |  +0.0019   -0.0287 |  +0.0119   +0.0132 |      0.8257 |  -1.34  7.87
+   20 |  +0.0218   -0.0023 |  +0.0155   +0.0287 |      0.8293 |  -1.39 10.24
+   24 |  -0.0057   -0.0193 |  +0.0137   +0.0683 |      0.8275 |  -1.40 11.14
+   28 |  +0.0180   +0.0020 |  +0.0191   +0.0361 |      0.8329 |  -1.40 12.68
+   32 |  -0.0427   -0.0731 |  +0.0134   +0.0226 |      0.8272 |  -1.37 14.04
+   36 |  -0.0123   +0.0181 |  +0.0227   +0.0457 |      0.8365 |  -1.39 15.63
+   40 |  +0.0152   -0.0124 |  +0.0134   +0.0564 |      0.8272 |  -1.38 17.54 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8138 AUPR 0.5146 | S+L+Z AUC 0.8272 AUPR 0.5711 | dZ AUC +0.0134 dZ AUPR +0.0564
+  (for reference, FINAL ep40: dZ AUC +0.0134 dZ AUPR +0.0564)
+
+----  FOLD fold9  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0000   +0.0000 |  +0.0000   +0.0000 |      0.8257 |   +nan  0.00
+    4 |  +0.0266   +0.0308 |  +0.0046   +0.0142 |      0.8304 |  -1.41  0.47
+    8 |  +0.0066   +0.0151 |  +0.0152   +0.0126 |      0.8409 |  -1.36  1.63
+   12 |  +0.0323   +0.0602 |  -0.0092   +0.0115 |      0.8165 |  -1.36  2.84
+   16 |  +0.0304   +0.0722 |  -0.0025   -0.0146 |      0.8232 |  -1.36  5.15
+   20 |  +0.0484   +0.0703 |  -0.0051   -0.0048 |      0.8207 |  -1.36  7.58
+   24 |  +0.0199   +0.0502 |  -0.0001   -0.0056 |      0.8256 |  -1.34 11.77
+   28 |  +0.0190   +0.0418 |  +0.0091   -0.0062 |      0.8348 |  -1.37 13.94
+   32 |  +0.0247   +0.0523 |  -0.0034   -0.0722 |      0.8223 |  -1.35 15.59
+   36 |  +0.0588   +0.0796 |  -0.0036   -0.0130 |      0.8222 |  -1.39 17.27
+   40 |  +0.0209   +0.0502 |  -0.0057   -0.0344 |      0.8201 |  -1.34 19.73 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8257 AUPR 0.5571 | S+L+Z AUC 0.8201 AUPR 0.5227 | dZ AUC -0.0057 dZ AUPR -0.0344
+  (for reference, FINAL ep40: dZ AUC -0.0057 dZ AUPR -0.0344)
+
+
+================  SUMMARY (RLOO scratch, 10-fold on remainder, early-stop on val-none, scored on FROZEN hold-out)  ================
+    unit   ep |  S+L AUC   +Z AUC   dZ_AU |  S+L AUPR  +Z AUPR   dZ_AP | final_dAU
+   fold0   40 |   0.8083   0.8287 +0.0204 |    0.4722   0.5773 +0.1051 |   +0.0204
+   fold1   40 |   0.8151   0.8365 +0.0213 |    0.5428   0.5839 +0.0410 |   +0.0213
+   fold2   40 |   0.8260   0.8336 +0.0076 |    0.5679   0.5498 -0.0182 |   +0.0076
+   fold3   40 |   0.8227   0.8214 -0.0013 |    0.5463   0.5639 +0.0176 |   -0.0013
+   fold4   40 |   0.8187   0.8251 +0.0064 |    0.5362   0.5468 +0.0106 |   +0.0064
+   fold5   40 |   0.8031   0.8320 +0.0289 |    0.5216   0.5273 +0.0057 |   +0.0289
+   fold6   40 |   0.8256   0.8324 +0.0069 |    0.5632   0.5459 -0.0173 |   +0.0069
+   fold7   40 |   0.8159   0.8305 +0.0146 |    0.5248   0.5532 +0.0285 |   +0.0146
+   fold8   40 |   0.8138   0.8272 +0.0134 |    0.5146   0.5711 +0.0564 |   +0.0134
+   fold9   40 |   0.8257   0.8201 -0.0057 |    0.5571   0.5227 -0.0344 |   -0.0057
+
+  At val-selected epoch, across 10 folds:
+    AUC :  S+L 0.8175±0.0074 | S+L+Z 0.8288±0.0051 | dZ +0.0113 wins 8/10
+    AUPR:  S+L 0.5347±0.0268 | S+L+Z 0.5542±0.0191 | dZ +0.0195 wins 7/10
+
+  early-stop vs run-to-end (dZ-AUC): selected +0.0113 | final-epoch +0.0113 | gain +0.0000
+
+  PAIRED TEST  (S+L+Z) vs (S+L)  at val-selected epoch, 10 folds:
+    AUC-ROC        mean dZ +0.0113 | wins 8/10 | paired-t t=+3.352 p=0.0085 | Wilcoxon W=3.0 p=0.0098 | dz=+1.06
+    AUPR           mean dZ +0.0195 | wins 7/10 | paired-t t=+1.501 p=0.1676 | Wilcoxon W=15.0 p=0.2324 | dz=+0.47
+    (dz = Cohen's d for paired diffs; |dz|>0.8 large. n folds is small,
+     so Wilcoxon p floors at ~0.002 for n=10 / ~0.06 for n=5.)
+
+[full-fit base] TRAIN RL on ALL remainder (N=798, no CV, val included) -> score on FROZEN hold-out (N=199)
+
+================  FULL-FIT BASE (all remainder, no CV, RL-trained)  ================
+  fit N=798 (pos 174, rate 0.218) | test N=199 (pos 43, rate 0.216)
+  S+L    :  AUC 0.8116  AUPR 0.5421
+  S+L+Z  :  AUC 0.8166  AUPR 0.5099   (dZ AUC +0.0051  dZ AUPR -0.0322)
+
+
+######## clf=cat lr=1e-3 rl_epochs=40 eval_every=4 ########
+Using device: cuda
+[normalize] input z-scoring = False (applied to ALL classifiers)
+Loading patients... False True
+Loading 2
+From pkl
+<utils.class_patient.Patient object at 0x7fe02419f2e0>
+Loaded 1213 patients
+After cleanup: 1206 patients
+[Landmark] L=24h H=48h | excluded 209 pre-landmark AKI | cohort 1206 -> 997 | pos 217 (21.77%)
+AKI positive (horizon): 217 (21.77%)
+[holdout] frac~0.2 seed=12345 N_holdout=199 (pos 43, rate 0.216) | N_remainder=798  FROZEN, never seen in training
+
+----  FOLD fold0  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0000   +0.0000 |  +0.0000   +0.0000 |      0.8083 |   +nan  0.00
+    4 |  +0.0401   +0.1478 |  +0.0171   +0.0637 |      0.8254 |  -1.43  0.02
+    8 |  +0.0187   +0.0974 |  +0.0261   +0.1271 |      0.8344 |  -1.45  0.04
+   12 |  +0.0308   +0.1305 |  +0.0161   +0.0998 |      0.8244 |  -1.45  0.05
+   16 |  +0.0243   +0.1637 |  +0.0192   +0.0837 |      0.8275 |  -1.43  0.06
+   20 |  +0.0345   +0.0962 |  +0.0270   +0.0734 |      0.8353 |  -1.40  0.08
+   24 |  +0.0159   +0.1078 |  +0.0329   +0.0893 |      0.8412 |  -1.43  0.11
+   28 |  +0.0448   +0.1756 |  +0.0280   +0.0976 |      0.8363 |  -1.43  0.16
+   32 |  +0.0514   +0.2126 |  +0.0371   +0.1284 |      0.8454 |  -1.45  0.23
+   36 |  +0.0448   +0.1624 |  +0.0294   +0.0942 |      0.8377 |  -1.42  0.33
+   40 |  +0.0420   +0.1966 |  +0.0180   +0.0839 |      0.8263 |  -1.43  0.46 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8083 AUPR 0.4722 | S+L+Z AUC 0.8263 AUPR 0.5561 | dZ AUC +0.0180 dZ AUPR +0.0839
+  (for reference, FINAL ep40: dZ AUC +0.0180 dZ AUPR +0.0839)
+
+----  FOLD fold1  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0000   +0.0000 |  +0.0000   +0.0000 |      0.8151 |   +nan  0.00
+    4 |  +0.0401   +0.0788 |  -0.0107   -0.0182 |      0.8044 |  -1.44  0.02
+    8 |  +0.0420   +0.1391 |  +0.0045   -0.0104 |      0.8196 |  -1.43  0.03
+   12 |  +0.0280   +0.0679 |  +0.0191   +0.0209 |      0.8342 |  -1.46  0.04
+   16 |  +0.0383   +0.1400 |  +0.0262   +0.0574 |      0.8414 |  -1.41  0.05
+   20 |  +0.0392   +0.0885 |  +0.0030   -0.0017 |      0.8181 |  -1.46  0.05
+   24 |  +0.0159   +0.0851 |  +0.0118   -0.0002 |      0.8269 |  -1.44  0.07
+   28 |  +0.0327   +0.0675 |  +0.0021   -0.0179 |      0.8172 |  -1.44  0.09
+   32 |  -0.0009   -0.0048 |  +0.0182   +0.0195 |      0.8333 |  -1.42  0.13
+   36 |  -0.0037   +0.0274 |  +0.0416   +0.0106 |      0.8567 |  -1.44  0.19
+   40 |  +0.0383   +0.1578 |  +0.0046   -0.0419 |      0.8198 |  -1.43  0.28 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8151 AUPR 0.5428 | S+L+Z AUC 0.8198 AUPR 0.5009 | dZ AUC +0.0046 dZ AUPR -0.0419
+  (for reference, FINAL ep40: dZ AUC +0.0046 dZ AUPR -0.0419)
+
+----  FOLD fold2  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0000   +0.0000 |  +0.0000   +0.0000 |      0.8260 |   +nan  0.00
+    4 |  -0.0224   -0.0484 |  -0.0057   -0.0565 |      0.8204 |  -1.43  0.02
+    8 |  -0.0317   -0.0738 |  -0.0052   -0.0415 |      0.8208 |  -1.43  0.04
+   12 |  -0.0299   -0.0684 |  -0.0013   +0.0170 |      0.8247 |  -1.45  0.05
+   16 |  -0.0373   -0.0848 |  -0.0060   -0.0614 |      0.8201 |  -1.44  0.07
+   20 |  -0.0243   -0.0926 |  -0.0250   -0.0765 |      0.8010 |  -1.43  0.09
+   24 |  -0.0383   -0.0917 |  -0.0261   -0.0401 |      0.7999 |  -1.42  0.12
+   28 |  -0.0205   -0.0498 |  -0.0072   -0.0304 |      0.8189 |  -1.42  0.16
+   32 |  -0.0196   -0.0713 |  -0.0027   -0.0181 |      0.8233 |  -1.45  0.23
+   36 |  -0.0177   -0.1002 |  +0.0067   -0.0046 |      0.8327 |  -1.44  0.31
+   40 |  -0.0019   -0.0511 |  -0.0161   -0.0651 |      0.8099 |  -1.41  0.42 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8260 AUPR 0.5679 | S+L+Z AUC 0.8099 AUPR 0.5028 | dZ AUC -0.0161 dZ AUPR -0.0651
+  (for reference, FINAL ep40: dZ AUC -0.0161 dZ AUPR -0.0651)
+
+----  FOLD fold3  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0000   +0.0000 |  +0.0000   +0.0000 |      0.8227 |   +nan  0.00
+    4 |  +0.0047   +0.0369 |  -0.0021   -0.0399 |      0.8207 |  -1.40  0.02
+    8 |  -0.0037   +0.0354 |  -0.0192   -0.0792 |      0.8035 |  -1.41  0.03
+   12 |  +0.0168   +0.0367 |  -0.0157   -0.0589 |      0.8071 |  -1.41  0.04
+   16 |  -0.0009   +0.0187 |  -0.0222   -0.0656 |      0.8005 |  -1.42  0.06
+   20 |  +0.0159   +0.0249 |  -0.0180   -0.0542 |      0.8047 |  -1.41  0.07
+   24 |  +0.0121   +0.0270 |  -0.0310   -0.0250 |      0.7917 |  -1.42  0.09
+   28 |  +0.0028   +0.0000 |  -0.0371   -0.0909 |      0.7856 |  -1.40  0.11
+   32 |  +0.0140   +0.0288 |  -0.0119   -0.0703 |      0.8108 |  -1.42  0.14
+   36 |  -0.0177   -0.0216 |  -0.0168   -0.0554 |      0.8059 |  -1.39  0.18
+   40 |  -0.0056   +0.0241 |  -0.0082   -0.0467 |      0.8145 |  -1.38  0.24 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8227 AUPR 0.5463 | S+L+Z AUC 0.8145 AUPR 0.4995 | dZ AUC -0.0082 dZ AUPR -0.0467
+  (for reference, FINAL ep40: dZ AUC -0.0082 dZ AUPR -0.0467)
+
+----  FOLD fold4  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0000   +0.0000 |  +0.0000   +0.0000 |      0.8187 |   +nan  0.00
+    4 |  +0.0170   +0.0666 |  +0.0130   +0.0014 |      0.8317 |  -1.48  0.04
+    8 |  -0.0063   +0.0321 |  -0.0025   -0.0245 |      0.8162 |  -1.49  0.06
+   12 |  +0.0134   -0.0011 |  +0.0192   -0.0040 |      0.8380 |  -1.46  0.07
+   16 |  +0.0143   +0.0521 |  +0.0134   +0.0329 |      0.8321 |  -1.44  0.09
+   20 |  -0.0027   +0.0273 |  +0.0180   +0.0200 |      0.8368 |  -1.45  0.12
+   24 |  +0.0045   +0.0556 |  +0.0137   -0.0020 |      0.8324 |  -1.46  0.15
+   28 |  +0.0233   +0.0880 |  +0.0122   -0.0021 |      0.8309 |  -1.50  0.21
+   32 |  +0.0152   +0.0079 |  +0.0051   -0.0122 |      0.8238 |  -1.46  0.29
+   36 |  +0.0063   +0.0606 |  +0.0051   -0.0308 |      0.8238 |  -1.46  0.42
+   40 |  +0.0027   +0.0151 |  +0.0049   +0.0086 |      0.8236 |  -1.45  0.56 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8187 AUPR 0.5362 | S+L+Z AUC 0.8236 AUPR 0.5449 | dZ AUC +0.0049 dZ AUPR +0.0086
+  (for reference, FINAL ep40: dZ AUC +0.0049 dZ AUPR +0.0086)
+
+----  FOLD fold5  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0000   +0.0000 |  +0.0000   +0.0000 |      0.8031 |   +nan  0.00
+    4 |  +0.0341   +0.0703 |  +0.0052   +0.0239 |      0.8083 |  -1.45  0.02
+    8 |  +0.0493   +0.1247 |  +0.0058   +0.0573 |      0.8089 |  -1.46  0.04
+   12 |  +0.0349   +0.0482 |  +0.0261   +0.0696 |      0.8292 |  -1.45  0.05
+   16 |  +0.0412   +0.0786 |  +0.0086   +0.0351 |      0.8117 |  -1.43  0.07
+   20 |  +0.0394   +0.1175 |  +0.0124   +0.0091 |      0.8154 |  -1.46  0.10
+   24 |  +0.0206   +0.1078 |  +0.0136   +0.0063 |      0.8166 |  -1.45  0.13
+   28 |  +0.0511   +0.1498 |  +0.0078   +0.0396 |      0.8108 |  -1.45  0.17
+   32 |  +0.0824   +0.1910 |  +0.0189   +0.0220 |      0.8220 |  -1.45  0.24
+   36 |  +0.0529   +0.1283 |  +0.0151   +0.0265 |      0.8181 |  -1.45  0.33
+   40 |  +0.0475   +0.0571 |  +0.0291   +0.0539 |      0.8321 |  -1.47  0.43 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8031 AUPR 0.5216 | S+L+Z AUC 0.8321 AUPR 0.5755 | dZ AUC +0.0291 dZ AUPR +0.0539
+  (for reference, FINAL ep40: dZ AUC +0.0291 dZ AUPR +0.0539)
+
+----  FOLD fold6  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0000   +0.0000 |  +0.0000   +0.0000 |      0.8256 |   +nan  0.00
+    4 |  +0.0125   +0.1115 |  +0.0201   +0.0600 |      0.8457 |  -1.43  0.03
+    8 |  +0.0081   +0.0653 |  +0.0055   +0.0286 |      0.8311 |  -1.43  0.04
+   12 |  -0.0054   +0.0507 |  +0.0247   +0.0350 |      0.8503 |  -1.45  0.05
+   16 |  +0.0099   +0.0737 |  +0.0115   +0.0308 |      0.8371 |  -1.45  0.07
+   20 |  -0.0054   +0.0727 |  +0.0197   +0.0358 |      0.8453 |  -1.43  0.09
+   24 |  -0.0072   +0.0250 |  +0.0109   +0.0143 |      0.8365 |  -1.47  0.12
+   28 |  +0.0063   +0.1196 |  +0.0219   +0.0256 |      0.8475 |  -1.48  0.17
+   32 |  +0.0188   +0.1253 |  +0.0206   +0.0413 |      0.8462 |  -1.44  0.24
+   36 |  +0.0045   +0.0901 |  +0.0186   +0.0174 |      0.8442 |  -1.44  0.35
+   40 |  +0.0116   +0.0581 |  +0.0185   +0.0279 |      0.8441 |  -1.48  0.48 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8256 AUPR 0.5632 | S+L+Z AUC 0.8441 AUPR 0.5910 | dZ AUC +0.0185 dZ AUPR +0.0279
+  (for reference, FINAL ep40: dZ AUC +0.0185 dZ AUPR +0.0279)
+
+----  FOLD fold7  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0000   +0.0000 |  +0.0000   +0.0000 |      0.8159 |   +nan  0.00
+    4 |  +0.0072   -0.0084 |  -0.0030   +0.0307 |      0.8129 |  -1.43  0.03
+    8 |  +0.0260   +0.0482 |  +0.0134   +0.0286 |      0.8293 |  -1.42  0.04
+   12 |  +0.0045   +0.0269 |  +0.0025   +0.0324 |      0.8184 |  -1.43  0.05
+   16 |  +0.0188   +0.0531 |  +0.0083   +0.0502 |      0.8242 |  -1.46  0.06
+   20 |  +0.0251   +0.0874 |  +0.0239   +0.0718 |      0.8397 |  -1.42  0.06
+   24 |  -0.0206   -0.0214 |  +0.0231   +0.0372 |      0.8390 |  -1.44  0.07
+   28 |  -0.0125   +0.0255 |  +0.0152   +0.0342 |      0.8311 |  -1.44  0.09
+   32 |  +0.0054   +0.0171 |  +0.0016   +0.0321 |      0.8175 |  -1.43  0.11
+   36 |  -0.0054   -0.0214 |  +0.0025   +0.0213 |      0.8184 |  -1.46  0.16
+   40 |  +0.0224   +0.0037 |  -0.0091   -0.0131 |      0.8068 |  -1.44  0.22 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8159 AUPR 0.5248 | S+L+Z AUC 0.8068 AUPR 0.5117 | dZ AUC -0.0091 dZ AUPR -0.0131
+  (for reference, FINAL ep40: dZ AUC -0.0091 dZ AUPR -0.0131)
+
+----  FOLD fold8  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0000   +0.0000 |  +0.0000   +0.0000 |      0.8138 |   +nan  0.00
+    4 |  +0.0057   +0.0272 |  +0.0009   -0.0368 |      0.8147 |  -1.41  0.03
+    8 |  +0.0066   -0.0284 |  +0.0024   -0.0249 |      0.8162 |  -1.42  0.04
+   12 |  -0.0209   -0.0356 |  +0.0036   -0.0260 |      0.8174 |  -1.44  0.06
+   16 |  -0.0095   -0.0303 |  +0.0154   -0.0168 |      0.8292 |  -1.42  0.09
+   20 |  -0.0000   -0.0134 |  -0.0006   -0.0251 |      0.8132 |  -1.42  0.12
+   24 |  -0.0142   -0.0128 |  -0.0003   -0.0375 |      0.8135 |  -1.43  0.18
+   28 |  -0.0427   -0.0525 |  +0.0200   -0.0086 |      0.8338 |  -1.43  0.25
+   32 |  +0.0019   -0.0253 |  +0.0082   +0.0024 |      0.8220 |  -1.42  0.34
+   36 |  +0.0066   +0.0212 |  +0.0078   -0.0070 |      0.8216 |  -1.45  0.44
+   40 |  -0.0028   -0.0255 |  +0.0049   -0.0023 |      0.8187 |  -1.43  0.54 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8138 AUPR 0.5146 | S+L+Z AUC 0.8187 AUPR 0.5124 | dZ AUC +0.0049 dZ AUPR -0.0023
+  (for reference, FINAL ep40: dZ AUC +0.0049 dZ AUPR -0.0023)
+
+----  FOLD fold9  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0000   +0.0000 |  +0.0000   +0.0000 |      0.8257 |   +nan  0.00
+    4 |  +0.0294   +0.0402 |  -0.0067   -0.0073 |      0.8190 |  -1.42  0.05
+    8 |  +0.0275   +0.0361 |  +0.0086   +0.0297 |      0.8344 |  -1.39  0.07
+   12 |  +0.0142   +0.0447 |  +0.0237   +0.0483 |      0.8494 |  -1.41  0.08
+   16 |  +0.0275   +0.0588 |  +0.0227   +0.0368 |      0.8484 |  -1.40  0.09
+   20 |  +0.0285   +0.0385 |  +0.0039   +0.0219 |      0.8296 |  -1.39  0.10
+   24 |  +0.0417   +0.0646 |  +0.0083   +0.0014 |      0.8341 |  -1.37  0.11
+   28 |  +0.0465   +0.0622 |  +0.0112   +0.0079 |      0.8369 |  -1.37  0.13
+   32 |  +0.0066   +0.0112 |  -0.0092   -0.0220 |      0.8165 |  -1.38  0.17
+   36 |  +0.0209   +0.0541 |  -0.0015   -0.0060 |      0.8242 |  -1.37  0.23
+   40 |  -0.0028   +0.0274 |  +0.0188   +0.0197 |      0.8445 |  -1.38  0.32 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8257 AUPR 0.5571 | S+L+Z AUC 0.8445 AUPR 0.5768 | dZ AUC +0.0188 dZ AUPR +0.0197
+  (for reference, FINAL ep40: dZ AUC +0.0188 dZ AUPR +0.0197)
+
+
+================  SUMMARY (RLOO scratch, 10-fold on remainder, early-stop on val-none, scored on FROZEN hold-out)  ================
+    unit   ep |  S+L AUC   +Z AUC   dZ_AU |  S+L AUPR  +Z AUPR   dZ_AP | final_dAU
+   fold0   40 |   0.8083   0.8263 +0.0180 |    0.4722   0.5561 +0.0839 |   +0.0180
+   fold1   40 |   0.8151   0.8198 +0.0046 |    0.5428   0.5009 -0.0419 |   +0.0046
+   fold2   40 |   0.8260   0.8099 -0.0161 |    0.5679   0.5028 -0.0651 |   -0.0161
+   fold3   40 |   0.8227   0.8145 -0.0082 |    0.5463   0.4995 -0.0467 |   -0.0082
+   fold4   40 |   0.8187   0.8236 +0.0049 |    0.5362   0.5449 +0.0086 |   +0.0049
+   fold5   40 |   0.8031   0.8321 +0.0291 |    0.5216   0.5755 +0.0539 |   +0.0291
+   fold6   40 |   0.8256   0.8441 +0.0185 |    0.5632   0.5910 +0.0279 |   +0.0185
+   fold7   40 |   0.8159   0.8068 -0.0091 |    0.5248   0.5117 -0.0131 |   -0.0091
+   fold8   40 |   0.8138   0.8187 +0.0049 |    0.5146   0.5124 -0.0023 |   +0.0049
+   fold9   40 |   0.8257   0.8445 +0.0188 |    0.5571   0.5768 +0.0197 |   +0.0188
+
+  At val-selected epoch, across 10 folds:
+    AUC :  S+L 0.8175±0.0074 | S+L+Z 0.8240±0.0123 | dZ +0.0065 wins 7/10
+    AUPR:  S+L 0.5347±0.0268 | S+L+Z 0.5372±0.0340 | dZ +0.0025 wins 5/10
+
+  early-stop vs run-to-end (dZ-AUC): selected +0.0065 | final-epoch +0.0065 | gain +0.0000
+
+  PAIRED TEST  (S+L+Z) vs (S+L)  at val-selected epoch, 10 folds:
+    AUC-ROC        mean dZ +0.0065 | wins 7/10 | paired-t t=+1.419 p=0.1897 | Wilcoxon W=15.0 p=0.2227 | dz=+0.45
+    AUPR           mean dZ +0.0025 | wins 5/10 | paired-t t=+0.169 p=0.8696 | Wilcoxon W=26.0 p=0.9219 | dz=+0.05
+    (dz = Cohen's d for paired diffs; |dz|>0.8 large. n folds is small,
+     so Wilcoxon p floors at ~0.002 for n=10 / ~0.06 for n=5.)
+
+[full-fit base] TRAIN RL on ALL remainder (N=798, no CV, val included) -> score on FROZEN hold-out (N=199)
+
+================  FULL-FIT BASE (all remainder, no CV, RL-trained)  ================
+  fit N=798 (pos 174, rate 0.218) | test N=199 (pos 43, rate 0.216)
+  S+L    :  AUC 0.8116  AUPR 0.5421
+  S+L+Z  :  AUC 0.8281  AUPR 0.5144   (dZ AUC +0.0165  dZ AUPR -0.0277)
+
+
+######## clf=cat lr=1e-4 rl_epochs=40 eval_every=4 ########
+Using device: cuda
+[normalize] input z-scoring = False (applied to ALL classifiers)
+Loading patients... False True
+Loading 2
+From pkl
+<utils.class_patient.Patient object at 0x7f7b12d272b0>
+Loaded 1213 patients
+After cleanup: 1206 patients
+[Landmark] L=24h H=48h | excluded 209 pre-landmark AKI | cohort 1206 -> 997 | pos 217 (21.77%)
+AKI positive (horizon): 217 (21.77%)
+[holdout] frac~0.2 seed=12345 N_holdout=199 (pos 43, rate 0.216) | N_remainder=798  FROZEN, never seen in training
+
+----  FOLD fold0  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0000   +0.0000 |  +0.0000   +0.0000 |      0.8083 |   +nan  0.00
+    4 |  +0.0383   +0.0768 |  +0.0133   +0.0748 |      0.8216 |  -1.42  0.00
+    8 |  +0.0355   +0.1463 |  +0.0137   +0.0773 |      0.8220 |  -1.45  0.00
+   12 |  +0.0149   +0.1357 |  +0.0231   +0.0812 |      0.8314 |  -1.44  0.00
+   16 |  +0.0112   +0.0968 |  +0.0227   +0.0787 |      0.8309 |  -1.43  0.00
+   20 |  +0.0009   +0.0796 |  +0.0227   +0.1194 |      0.8309 |  -1.43  0.01
+   24 |  +0.0075   +0.0837 |  -0.0006   +0.0659 |      0.8077 |  -1.42  0.01
+   28 |  +0.0177   +0.0835 |  +0.0143   +0.0986 |      0.8226 |  -1.43  0.01
+   32 |  +0.0149   +0.0426 |  +0.0139   +0.0631 |      0.8222 |  -1.44  0.01
+   36 |  +0.0047   +0.0248 |  +0.0154   +0.0374 |      0.8236 |  -1.42  0.01
+   40 |  +0.0392   +0.1363 |  +0.0161   +0.0599 |      0.8244 |  -1.42  0.01 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8083 AUPR 0.4722 | S+L+Z AUC 0.8244 AUPR 0.5322 | dZ AUC +0.0161 dZ AUPR +0.0599
+  (for reference, FINAL ep40: dZ AUC +0.0161 dZ AUPR +0.0599)
+
+----  FOLD fold1  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0000   +0.0000 |  +0.0000   +0.0000 |      0.8151 |   +nan  0.00
+    4 |  +0.0271   +0.0987 |  +0.0094   -0.0152 |      0.8245 |  -1.44  0.00
+    8 |  +0.0168   +0.0277 |  -0.0073   -0.0453 |      0.8078 |  -1.42  0.00
+   12 |  +0.0588   +0.1590 |  +0.0210   +0.0171 |      0.8362 |  -1.47  0.00
+   16 |  +0.0019   +0.0622 |  -0.0054   -0.0108 |      0.8098 |  -1.42  0.00
+   20 |  +0.0093   +0.0576 |  +0.0048   -0.0566 |      0.8199 |  -1.45  0.00
+   24 |  -0.0037   +0.0260 |  -0.0073   -0.0385 |      0.8078 |  -1.44  0.00
+   28 |  +0.0280   +0.0742 |  +0.0073   -0.0423 |      0.8225 |  -1.43  0.01
+   32 |  +0.0205   +0.1127 |  -0.0043   -0.0428 |      0.8108 |  -1.44  0.01
+   36 |  +0.0028   +0.0534 |  -0.0018   -0.0521 |      0.8134 |  -1.44  0.01
+   40 |  +0.0112   +0.0803 |  +0.0124   -0.0300 |      0.8275 |  -1.43  0.01 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8151 AUPR 0.5428 | S+L+Z AUC 0.8275 AUPR 0.5128 | dZ AUC +0.0124 dZ AUPR -0.0300
+  (for reference, FINAL ep40: dZ AUC +0.0124 dZ AUPR -0.0300)
+
+----  FOLD fold2  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0000   +0.0000 |  +0.0000   +0.0000 |      0.8260 |   +nan  0.00
+    4 |  -0.0327   -0.0615 |  -0.0160   -0.0647 |      0.8101 |  -1.44  0.00
+    8 |  -0.0233   -0.0941 |  +0.0001   -0.0319 |      0.8262 |  -1.43  0.00
+   12 |  -0.0373   -0.1107 |  +0.0097   -0.0164 |      0.8357 |  -1.46  0.00
+   16 |  -0.0140   -0.0653 |  -0.0134   -0.0511 |      0.8126 |  -1.43  0.00
+   20 |  -0.0327   -0.1032 |  -0.0064   -0.0320 |      0.8196 |  -1.44  0.01
+   24 |  -0.0243   -0.0880 |  -0.0061   -0.0162 |      0.8199 |  -1.42  0.01
+   28 |  -0.0364   -0.0715 |  -0.0103   -0.0320 |      0.8157 |  -1.43  0.01
+   32 |  -0.0289   -0.0113 |  -0.0066   -0.0442 |      0.8195 |  -1.47  0.01
+   36 |  -0.0261   -0.0919 |  -0.0067   -0.0573 |      0.8193 |  -1.45  0.01
+   40 |  -0.0233   -0.0972 |  -0.0007   -0.0675 |      0.8253 |  -1.40  0.01 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8260 AUPR 0.5679 | S+L+Z AUC 0.8253 AUPR 0.5005 | dZ AUC -0.0007 dZ AUPR -0.0675
+  (for reference, FINAL ep40: dZ AUC -0.0007 dZ AUPR -0.0675)
+
+----  FOLD fold3  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0000   +0.0000 |  +0.0000   +0.0000 |      0.8227 |   +nan  0.00
+    4 |  +0.0112   +0.0573 |  -0.0031   -0.0588 |      0.8196 |  -1.40  0.00
+    8 |  -0.0065   +0.0120 |  -0.0106   -0.0682 |      0.8122 |  -1.41  0.00
+   12 |  +0.0177   +0.0357 |  -0.0112   -0.0533 |      0.8116 |  -1.40  0.00
+   16 |  -0.0196   -0.0042 |  -0.0092   -0.0499 |      0.8135 |  -1.43  0.01
+   20 |  -0.0233   -0.0317 |  -0.0149   -0.0715 |      0.8078 |  -1.40  0.01
+   24 |  -0.0233   +0.0126 |  -0.0149   -0.0671 |      0.8078 |  -1.42  0.01
+   28 |  -0.0019   -0.0091 |  -0.0048   -0.0107 |      0.8180 |  -1.40  0.01
+   32 |  +0.0037   +0.0288 |  -0.0003   -0.0215 |      0.8225 |  -1.44  0.01
+   36 |  +0.0131   +0.0367 |  -0.0109   -0.0294 |      0.8119 |  -1.40  0.01
+   40 |  +0.0037   +0.0348 |  -0.0100   -0.0606 |      0.8128 |  -1.42  0.01 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8227 AUPR 0.5463 | S+L+Z AUC 0.8128 AUPR 0.4857 | dZ AUC -0.0100 dZ AUPR -0.0606
+  (for reference, FINAL ep40: dZ AUC -0.0100 dZ AUPR -0.0606)
+
+----  FOLD fold4  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0000   +0.0000 |  +0.0000   +0.0000 |      0.8187 |   +nan  0.00
+    4 |  +0.0108   +0.0612 |  +0.0228   +0.0637 |      0.8415 |  -1.48  0.00
+    8 |  +0.0251   +0.0694 |  +0.0089   -0.0102 |      0.8277 |  -1.49  0.01
+   12 |  +0.0063   +0.0182 |  +0.0078   +0.0167 |      0.8265 |  -1.44  0.01
+   16 |  +0.0323   +0.0640 |  +0.0189   -0.0069 |      0.8377 |  -1.44  0.01
+   20 |  -0.0143   +0.0145 |  +0.0116   -0.0277 |      0.8304 |  -1.43  0.01
+   24 |  +0.0018   +0.0563 |  +0.0100   -0.0230 |      0.8287 |  -1.46  0.01
+   28 |  +0.0278   +0.0778 |  +0.0161   -0.0161 |      0.8348 |  -1.49  0.01
+   32 |  -0.0027   +0.0471 |  +0.0236   -0.0136 |      0.8423 |  -1.46  0.01
+   36 |  -0.0036   +0.0638 |  +0.0109   -0.0025 |      0.8296 |  -1.46  0.01
+   40 |  +0.0152   +0.0624 |  +0.0253   +0.0116 |      0.8441 |  -1.44  0.01 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8187 AUPR 0.5362 | S+L+Z AUC 0.8441 AUPR 0.5478 | dZ AUC +0.0253 dZ AUPR +0.0116
+  (for reference, FINAL ep40: dZ AUC +0.0253 dZ AUPR +0.0116)
+
+----  FOLD fold5  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0000   +0.0000 |  +0.0000   +0.0000 |      0.8031 |   +nan  0.00
+    4 |  +0.0215   +0.0324 |  +0.0075   +0.0173 |      0.8105 |  -1.44  0.00
+    8 |  +0.0323   +0.0649 |  +0.0030   +0.0281 |      0.8061 |  -1.46  0.00
+   12 |  +0.0332   +0.0966 |  +0.0109   +0.0419 |      0.8140 |  -1.45  0.00
+   16 |  +0.0260   +0.0509 |  +0.0215   +0.0628 |      0.8245 |  -1.43  0.01
+   20 |  +0.0457   +0.1051 |  +0.0224   +0.0844 |      0.8254 |  -1.44  0.01
+   24 |  +0.0538   +0.1174 |  +0.0222   +0.0532 |      0.8253 |  -1.46  0.01
+   28 |  +0.0305   +0.1000 |  +0.0088   +0.0460 |      0.8119 |  -1.47  0.01
+   32 |  +0.0484   +0.0951 |  +0.0103   +0.0696 |      0.8134 |  -1.45  0.01
+   36 |  +0.0412   +0.0875 |  +0.0170   +0.0778 |      0.8201 |  -1.46  0.01
+   40 |  +0.0242   +0.0816 |  +0.0161   +0.0768 |      0.8192 |  -1.46  0.01 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8031 AUPR 0.5216 | S+L+Z AUC 0.8192 AUPR 0.5983 | dZ AUC +0.0161 dZ AUPR +0.0768
+  (for reference, FINAL ep40: dZ AUC +0.0161 dZ AUPR +0.0768)
+
+----  FOLD fold6  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0000   +0.0000 |  +0.0000   +0.0000 |      0.8256 |   +nan  0.00
+    4 |  +0.0054   +0.1199 |  +0.0061   +0.0250 |      0.8317 |  -1.43  0.00
+    8 |  +0.0099   +0.1080 |  +0.0089   +0.0074 |      0.8345 |  -1.44  0.00
+   12 |  +0.0152   +0.1650 |  +0.0197   +0.0312 |      0.8453 |  -1.44  0.01
+   16 |  -0.0054   +0.1074 |  +0.0225   +0.0537 |      0.8481 |  -1.45  0.01
+   20 |  +0.0269   +0.1179 |  +0.0061   +0.0553 |      0.8317 |  -1.44  0.01
+   24 |  +0.0197   +0.1065 |  -0.0057   +0.0031 |      0.8199 |  -1.44  0.01
+   28 |  +0.0090   +0.1009 |  -0.0027   +0.0052 |      0.8229 |  -1.47  0.01
+   32 |  +0.0224   +0.1550 |  +0.0085   +0.0164 |      0.8341 |  -1.43  0.01
+   36 |  -0.0027   +0.0149 |  +0.0116   +0.0390 |      0.8372 |  -1.44  0.01
+   40 |  -0.0036   +0.0591 |  -0.0100   -0.0148 |      0.8156 |  -1.45  0.01 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8256 AUPR 0.5632 | S+L+Z AUC 0.8156 AUPR 0.5484 | dZ AUC -0.0100 dZ AUPR -0.0148
+  (for reference, FINAL ep40: dZ AUC -0.0100 dZ AUPR -0.0148)
+
+----  FOLD fold7  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0000   +0.0000 |  +0.0000   +0.0000 |      0.8159 |   +nan  0.00
+    4 |  +0.0323   +0.0534 |  +0.0045   +0.0279 |      0.8204 |  -1.44  0.00
+    8 |  +0.0045   +0.0098 |  +0.0183   +0.0223 |      0.8342 |  -1.42  0.00
+   12 |  -0.0063   +0.0278 |  +0.0143   +0.0318 |      0.8302 |  -1.45  0.00
+   16 |  +0.0152   +0.0399 |  -0.0000   +0.0228 |      0.8159 |  -1.46  0.01
+   20 |  +0.0215   +0.0502 |  +0.0255   +0.0954 |      0.8414 |  -1.44  0.01
+   24 |  +0.0314   +0.0340 |  +0.0021   +0.0484 |      0.8180 |  -1.42  0.01
+   28 |  +0.0161   +0.0595 |  -0.0021   +0.0253 |      0.8138 |  -1.43  0.01
+   32 |  +0.0152   +0.0621 |  +0.0154   +0.0305 |      0.8312 |  -1.44  0.01
+   36 |  +0.0260   +0.0530 |  +0.0097   +0.0409 |      0.8256 |  -1.46  0.01
+   40 |  +0.0349   +0.0971 |  +0.0086   +0.0456 |      0.8245 |  -1.44  0.01 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8159 AUPR 0.5248 | S+L+Z AUC 0.8245 AUPR 0.5704 | dZ AUC +0.0086 dZ AUPR +0.0456
+  (for reference, FINAL ep40: dZ AUC +0.0086 dZ AUPR +0.0456)
+
+----  FOLD fold8  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0000   +0.0000 |  +0.0000   +0.0000 |      0.8138 |   +nan  0.00
+    4 |  -0.0000   -0.0200 |  -0.0034   -0.0044 |      0.8104 |  -1.40  0.00
+    8 |  -0.0218   -0.0439 |  +0.0115   -0.0155 |      0.8253 |  -1.44  0.00
+   12 |  +0.0047   +0.0318 |  +0.0022   -0.0322 |      0.8160 |  -1.45  0.00
+   16 |  -0.0285   -0.0256 |  +0.0016   -0.0105 |      0.8154 |  -1.43  0.01
+   20 |  -0.0057   -0.0271 |  +0.0154   +0.0257 |      0.8292 |  -1.42  0.01
+   24 |  -0.0152   -0.0198 |  +0.0097   -0.0170 |      0.8235 |  -1.43  0.01
+   28 |  -0.0342   -0.0396 |  -0.0018   -0.0195 |      0.8120 |  -1.44  0.01
+   32 |  -0.0304   -0.0649 |  -0.0040   -0.0266 |      0.8098 |  -1.43  0.01
+   36 |  +0.0133   +0.0613 |  +0.0122   +0.0014 |      0.8260 |  -1.43  0.01
+   40 |  -0.0085   +0.0281 |  +0.0097   -0.0108 |      0.8235 |  -1.44  0.01 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8138 AUPR 0.5146 | S+L+Z AUC 0.8235 AUPR 0.5038 | dZ AUC +0.0097 dZ AUPR -0.0108
+  (for reference, FINAL ep40: dZ AUC +0.0097 dZ AUPR -0.0108)
+
+----  FOLD fold9  RLOO K=4  (final epoch)  ----
+   ep | val_dAUC val_dAUPR |  ho_dAUC  ho_dAUPR | ho_full_AUC |  A_pos drift
+    0 |  +0.0000   +0.0000 |  +0.0000   +0.0000 |      0.8257 |   +nan  0.00
+    4 |  +0.0655   +0.1129 |  +0.0091   +0.0196 |      0.8348 |  -1.42  0.00
+    8 |  +0.0436   +0.0839 |  +0.0121   +0.0362 |      0.8378 |  -1.38  0.01
+   12 |  +0.0237   +0.0470 |  -0.0007   +0.0020 |      0.8250 |  -1.40  0.01
+   16 |  +0.0455   +0.0665 |  +0.0216   +0.0399 |      0.8473 |  -1.37  0.01
+   20 |  +0.0104   +0.0153 |  +0.0145   +0.0290 |      0.8402 |  -1.38  0.01
+   24 |  +0.0275   +0.0839 |  +0.0097   +0.0413 |      0.8354 |  -1.38  0.01
+   28 |  +0.0304   +0.0513 |  +0.0015   +0.0167 |      0.8272 |  -1.38  0.01
+   32 |  +0.0427   +0.0940 |  +0.0025   +0.0227 |      0.8283 |  -1.38  0.01
+   36 |  +0.0304   +0.0466 |  +0.0152   +0.0304 |      0.8409 |  -1.39  0.01
+   40 |  +0.0323   +0.0605 |  +0.0085   +0.0260 |      0.8342 |  -1.39  0.01 <== stop
+  SELECTED ep40 by final epoch: HOLD-OUT  S+L AUC 0.8257 AUPR 0.5571 | S+L+Z AUC 0.8342 AUPR 0.5830 | dZ AUC +0.0085 dZ AUPR +0.0260
+  (for reference, FINAL ep40: dZ AUC +0.0085 dZ AUPR +0.0260)
+
+
+================  SUMMARY (RLOO scratch, 10-fold on remainder, early-stop on val-none, scored on FROZEN hold-out)  ================
+    unit   ep |  S+L AUC   +Z AUC   dZ_AU |  S+L AUPR  +Z AUPR   dZ_AP | final_dAU
+   fold0   40 |   0.8083   0.8244 +0.0161 |    0.4722   0.5322 +0.0599 |   +0.0161
+   fold1   40 |   0.8151   0.8275 +0.0124 |    0.5428   0.5128 -0.0300 |   +0.0124
+   fold2   40 |   0.8260   0.8253 -0.0007 |    0.5679   0.5005 -0.0675 |   -0.0007
+   fold3   40 |   0.8227   0.8128 -0.0100 |    0.5463   0.4857 -0.0606 |   -0.0100
+   fold4   40 |   0.8187   0.8441 +0.0253 |    0.5362   0.5478 +0.0116 |   +0.0253
+   fold5   40 |   0.8031   0.8192 +0.0161 |    0.5216   0.5983 +0.0768 |   +0.0161
+   fold6   40 |   0.8256   0.8156 -0.0100 |    0.5632   0.5484 -0.0148 |   -0.0100
+   fold7   40 |   0.8159   0.8245 +0.0086 |    0.5248   0.5704 +0.0456 |   +0.0086
+   fold8   40 |   0.8138   0.8235 +0.0097 |    0.5146   0.5038 -0.0108 |   +0.0097
+   fold9   40 |   0.8257   0.8342 +0.0085 |    0.5571   0.5830 +0.0260 |   +0.0085
+
+  At val-selected epoch, across 10 folds:
+    AUC :  S+L 0.8175±0.0074 | S+L+Z 0.8251±0.0085 | dZ +0.0076 wins 7/10
+    AUPR:  S+L 0.5347±0.0268 | S+L+Z 0.5383±0.0359 | dZ +0.0036 wins 5/10
+
+  early-stop vs run-to-end (dZ-AUC): selected +0.0076 | final-epoch +0.0076 | gain +0.0000
+
+  PAIRED TEST  (S+L+Z) vs (S+L)  at val-selected epoch, 10 folds:
+    AUC-ROC        mean dZ +0.0076 | wins 7/10 | paired-t t=+2.103 p=0.0648 | Wilcoxon W=12.0 p=0.1250 | dz=+0.66
+    AUPR           mean dZ +0.0036 | wins 5/10 | paired-t t=+0.233 p=0.8213 | Wilcoxon W=26.0 p=0.9219 | dz=+0.07
+    (dz = Cohen's d for paired diffs; |dz|>0.8 large. n folds is small,
+     so Wilcoxon p floors at ~0.002 for n=10 / ~0.06 for n=5.)
+
+[full-fit base] TRAIN RL on ALL remainder (N=798, no CV, val included) -> score on FROZEN hold-out (N=199)
+
+================  FULL-FIT BASE (all remainder, no CV, RL-trained)  ================
+  fit N=798 (pos 174, rate 0.218) | test N=199 (pos 43, rate 0.216)
+  S+L    :  AUC 0.8116  AUPR 0.5421
+  S+L+Z  :  AUC 0.8397  AUPR 0.5704   (dZ AUC +0.0282  dZ AUPR +0.0283)
+
+
+######## sweep done -> log_sweep_rl.txt ########
