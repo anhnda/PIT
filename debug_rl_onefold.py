@@ -111,8 +111,8 @@ def main():
                              "check encoder architecture")
         torch.nn.init.zeros_(net.fc_mean.weight)
         torch.nn.init.zeros_(net.fc_mean.bias)
-        print(f"[fold{args.fold_id}] neutral_init: fc_mean zeroed "
-              f"(Z init = 0, dZ@ep0 should be 0)", flush=True)
+        print(f"[fold{args.fold_id}] neutral_init: fc_mean zeroed (Z init = 0)",
+              flush=True)
 
     # ---- run RL with full per-epoch logging ----
     log = rl_rloo(net, tr_list, ho, feats, enc, stats,
