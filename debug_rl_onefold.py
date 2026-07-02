@@ -43,6 +43,10 @@ def build_argparser():
     pa.add_argument("--no_normalize", action="store_true")
     pa.add_argument("--seed", type=int, default=27,
                     help="StratifiedKFold random_state (== args.seed in main)")
+    pa.add_argument("--init_seed", type=int, default=None,
+                    help="seed for net init (torch/np) ONLY. Default None -> uses "
+                         "fold_id (matches the full run). Fix --seed and vary this "
+                         "to isolate init lottery from split lottery.")
     return pa
 
 
@@ -86,8 +90,11 @@ def main():
 
     stats = HybridDataset(tr_list, feats, enc).get_normalization_stats()
 
-    # ---- replicate net init exactly (seed == rep == fold_id) ----
-    torch.manual_seed(args.fold_id); np.random.seed(args.fold_id)
+    # ---- net init: init_seed if given, else fold_id (matches full run) ----
+    init_seed = args.fold_id if args.init_seed is None else args.init_seed
+    torch.manual_seed(init_seed); np.random.seed(init_seed)
+    print(f"[fold{args.fold_id}] net init_seed={init_seed} "
+          f"(split seed={args.seed})", flush=True)
     net = make_net(args.encoder, len(feats)).to(D.DEVICE)
 
     # ---- run RL with full per-epoch logging ----
