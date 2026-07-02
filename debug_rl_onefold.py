@@ -47,6 +47,10 @@ def build_argparser():
                     help="seed for net init (torch/np) ONLY. Default None -> uses "
                          "fold_id (matches the full run). Fix --seed and vary this "
                          "to isolate init lottery from split lottery.")
+    pa.add_argument("--neutral_init", action="store_true",
+                    help="zero fc_mean so Z init = 0 for every patient "
+                         "(dZ at ep0 == 0 exactly; all later dZ is from RL only). "
+                         "fc_logstd left untouched so exploration noise stays ~1.")
     return pa
 
 
@@ -96,6 +100,19 @@ def main():
     print(f"[fold{args.fold_id}] net init_seed={init_seed} "
           f"(split seed={args.seed})", flush=True)
     net = make_net(args.encoder, len(feats)).to(D.DEVICE)
+
+    if args.neutral_init:
+        # zero the mean head -> mean = fc_mean(h) = 0 for every patient at ep0,
+        # so Z init is a constant-0 vector and dZ(ep0) == 0 exactly. fc_logstd is
+        # left as-is so the Gaussian policy still has ~unit std to explore, and
+        # gradients still flow through fc_mean (via log_prob) so RL escapes 0.
+        if not hasattr(net, "fc_mean"):
+            raise SystemExit("--neutral_init: net has no fc_mean; "
+                             "check encoder architecture")
+        torch.nn.init.zeros_(net.fc_mean.weight)
+        torch.nn.init.zeros_(net.fc_mean.bias)
+        print(f"[fold{args.fold_id}] neutral_init: fc_mean zeroed "
+              f"(Z init = 0, dZ@ep0 should be 0)", flush=True)
 
     # ---- run RL with full per-epoch logging ----
     log = rl_rloo(net, tr_list, ho, feats, enc, stats,
