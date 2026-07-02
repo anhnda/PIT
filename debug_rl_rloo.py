@@ -97,6 +97,17 @@ def make_net(enc_kind, n_feat):
     return Net(input_dim=n_feat, hidden_dim=20, latent_dim=28, time_dim=32)
 
 
+def neutralize_init(net):
+    """Zero fc_mean so Z init = 0 for every patient (dZ@ep0 == 0 exactly). Leaves
+    fc_logstd untouched so the policy keeps ~unit exploration noise; gradients
+    still flow through fc_mean via log_prob so RL escapes 0."""
+    if not hasattr(net, "fc_mean"):
+        raise SystemExit("--neutral_init: net has no fc_mean; check architecture")
+    torch.nn.init.zeros_(net.fc_mean.weight)
+    torch.nn.init.zeros_(net.fc_mean.bias)
+    return net
+
+
 # ---------------------------------------------------------------- frozen hold-out
 def cohort_labels(patientList, feats, enc):
     """One block pass over the whole cohort to get labels, in list order."""
@@ -376,6 +387,10 @@ def main():
     pa.add_argument("--no_normalize", action="store_true",
                     help="disable input z-scoring (baseline uses raw inputs)")
     pa.add_argument("--seed", type=int, default=27)
+    pa.add_argument("--neutral_init", action="store_true",
+                    help="zero fc_mean so Z init = 0 for every patient (dZ@ep0==0; "
+                         "all later dZ is RL-only). Applies to RL nets only, not "
+                         "the full-fit base. fc_logstd left untouched.")
     pa.add_argument("--log", default="log.txt",
                     help="tee all stdout to this file (default log.txt; "
                          "set '' or 'none' to disable)")
@@ -481,6 +496,8 @@ def run_folds(patients, feats, enc, args):
         stats = HybridDataset(tp, feats, enc).get_normalization_stats()
         torch.manual_seed(0); np.random.seed(0)
         net = make_net(args.encoder, len(feats)).to(DEVICE)
+        if args.neutral_init:
+            neutralize_init(net)
         log = rl_rloo(net, tp, test_p.patientList, feats, enc, stats,
                       clf=args.clf, epochs=args.rl_epochs, eval_every=args.eval_every,
                       K=args.K, lr=args.lr, ent_coef=args.ent_coef,
@@ -511,6 +528,8 @@ def run_holdout(patients, feats, enc, args, holdout_seed=None):
 
         torch.manual_seed(rep); np.random.seed(rep)
         net = make_net(args.encoder, len(feats)).to(DEVICE)
+        if args.neutral_init:
+            neutralize_init(net)
         log = rl_rloo(net, tr_list, ho, feats, enc, stats,
                       clf=args.clf, epochs=args.rl_epochs, eval_every=args.eval_every,
                       K=args.K, lr=args.lr, ent_coef=args.ent_coef,
